@@ -20,9 +20,9 @@ class Nim(TwoPlayerGame):
     def make_move(self, move):
         move = list(map(int, move.split(",")))
 
-        # 10% chance to reduce move[1] by 1
-        if random.random() < 0.1 and move[1] > 0:
-            move[1] -= 1
+        # # 10% chance to reduce move[1] by 1
+        # if random.random() < 0.1 and move[1] > 0:
+        #     move[1] -= 1
 
         self.piles[move[0] - 1] -= move[1]
 
@@ -41,7 +41,7 @@ class Nim(TwoPlayerGame):
         return 100 if self.win() else 0
 
 def play_ai_vs_ai(num_games=10):
-    ai_algo = Negamax(3)  # Set search depth
+    ai_algo = Negamax(1)  # Set search depth
     results = {"AI1": 0, "AI2": 0}
 
     for game_num in range(num_games):
