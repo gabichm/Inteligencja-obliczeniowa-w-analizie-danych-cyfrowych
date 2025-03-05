@@ -1,0 +1,3 @@
+# gra
+
+#uzytkownicy ai
