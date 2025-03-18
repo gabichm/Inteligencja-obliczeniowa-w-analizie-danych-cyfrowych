@@ -1,6 +1,6 @@
 # 1. Wprowadzenie
 
-Gra Nim to klasyczna gra matematyczna, w której dwóch graczy na zmianę usuwa elementy z kilku stosów. Gracz, który usunie ostatni element, przegrywa. Nie ma W tym eksperymencie zaimplementowano grę Nim przy użyciu biblioteki easyAI, pozwalając dwóm agentom AI grać przeciwko sobie.
+Gra Nim to klasyczna gra matematyczna, w której dwóch graczy na zmianę usuwa elementy z kilku stosów. Gracz, który usunie ostatni element, przegrywa. W tym eksperymencie zaimplementowano grę Nim przy użyciu biblioteki easyAI, pozwalając dwóm agentom AI grać przeciwko sobie.
 
 # 2. Implementacja Gry Nim
 
