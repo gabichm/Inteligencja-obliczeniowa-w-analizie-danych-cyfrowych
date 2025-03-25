@@ -1,6 +1,6 @@
 import sys
 import matplotlib.pyplot as plt
-sys.path.append("C:\\Users\\Gabrysia\\PycharmProjects\\Inteligencja-obliczeniowa\\aipython")
+sys.path.append("aipython")
 from aipython.searchMPP import SearcherMPP
 from aipython.stripsProblem import STRIPS_domain, Planning_problem, Strips
 from aipython.stripsForwardPlanner import Forward_STRIPS
