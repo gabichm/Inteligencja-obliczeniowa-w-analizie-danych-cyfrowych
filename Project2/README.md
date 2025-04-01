@@ -9,7 +9,7 @@ W niniejszym projekcie zajmujemy się opracowaniem systemu planowania opieki pie
 System ma na celu:
 - Planowanie działań pielęgniarki na różnych stacjach szpitalnych (np. pokój pacjenta, apteka, zlew),
 - Realizację różnych zadań pielęgniarki, takich jak dostarczenie leków, przeprowadzenie testów, rozmowy z pacjentami,
-- Zoptymalizowanie działania pielęgniarki w kontekście ograniczonych zasobów (np. medykamenty, czas, ręce wolne).
+- Zoptymalizowanie działania pielęgniarki w kontekście ograniczonych zasobów (np. medykamenty, czas, wolne ręce).
 
 ---
 
@@ -17,13 +17,9 @@ System ma na celu:
 
 Projekt opiera się na stworzeniu modelu domeny opieki szpitalnej oraz sformułowaniu problemu planowania z wykorzystaniem reprezentacji w logice STRIPS. Model ten uwzględnia:
 - **Lokalizacje pielęgniarki** w szpitalu, takie jak stacja, pokój pacjenta, apteka i zlew,
-- **Zasoby pielęgniarki**, takie jak ręce wolne, dostępność leków i testów medycznych,
-- **Zadania pielęgniarki**, takie jak dostarczanie leków, przeprowadzanie testów, czyszczenie rąk, rozmowy z pacjentami.
+- **Zasoby pielęgniarki**, takie jak  wolne ręce, posiadane leki,
+- **Zadania pielęgniarki**, takie jak podawanie leków, przeprowadzanie testów, mycie rąk, rozmowy z pacjentami.
 
-Główne cele:
-- Stworzenie modelu dziedziny i problemu planowania,
-- Implementacja algorytmu planowania za pomocą algorytmu Forward STRIPS,
-- Mierzenie czasu rozwiązania problemu.
 
 Zakres projektu obejmuje:
 - Implementację modelu STRIPS i domeny opieki szpitalnej,
@@ -37,7 +33,7 @@ Zakres projektu obejmuje:
 ##### **3.1. Model Domena STRIPS**
 Model w logice STRIPS reprezentuje stan systemu, czyli stan poszczególnych zmiennych (np. lokalizacji pielęgniarki, dostępności leków, stanu rąk pielęgniarki). Przykładami działań w tej domenie są:
 - **Przemieszczanie pielęgniarki** pomiędzy różnymi lokalizacjami,
-- **Zbieranie leków** z apteki,
+- **Pobieranie leków** z apteki,
 - **Wykonywanie testów medycznych**,
 - **Przeprowadzanie rozmów** z pacjentami.
 
@@ -134,8 +130,8 @@ print(f"Czas rozwiązywania problemu: {execution_time:.4f} sekundy")
 
 Po uruchomieniu systemu planowania, czas rozwiązania problemu wahał się w zależności od złożoności problemu. Na przykład:
 
-- Dla prostych problemów czas rozwiązania wynosił 0.12 sekundy,
-- Dla bardziej złożonych problemów (np. większa liczba pacjentów, większa liczba lokalizacji) czas rozwiązania wynosił 0.56 sekundy.
+- Dla prostych problemów czas rozwiązania wynosił nawet 0.029 sekundy,
+- Dla bardziej złożonych problemów (np. większa liczba pacjentów, większa liczba lokalizacji) czas rozwiązania wynosił do 40 sekund.
 
 | Problem          | Bez Heurystyki | Forward Heuristic Hands | Forward Heuristic Tasks | Forward Heuristics Both |
 |-----------------|----------------|-------------------------|-------------------------|-------------------------|
@@ -150,17 +146,8 @@ Po uruchomieniu systemu planowania, czas rozwiązania problemu wahał się w zal
 
 #### **7. Wnioski**
 
-- **Skalowalność**: System działa sprawnie w przypadku prostych problemów, ale złożoność czasowa wzrasta wraz z liczbą działań do wykonania. Można rozważyć optymalizację algorytmu planowania, np. przy pomocy heurystyk.
+- **Skalowalność**: System działa sprawnie w przypadku prostych problemów, ale złożoność czasowa wzrasta wraz z liczbą działań do wykonania. Wykorzystanie heurystyk jest dobrym podejściem zmniejszającym czas wykonania problemów.
 - **Zastosowanie w praktyce**: System może być użyty w realnych warunkach szpitalnych do wsparcia pielęgniarek w codziennym planowaniu ich działań, zmniejszając czas potrzebny na realizację zadań.
-- **Możliwości rozwoju**: W przyszłości system może zostać rozszerzony o nowe działania, takie jak interakcje z pacjentami, integrację z systemami szpitalnymi (np. EHR) oraz adaptację do dynamicznie zmieniających się warunków.
+- **Możliwości rozwoju**: W przyszłości system może zostać rozszerzony o nowe działania, takie jak interakcje z pacjentami oraz adaptację do dynamicznie zmieniających się warunków.
 
 ---
-
-#### **8. Literatura**
-
-- Fikes, R., & Nilsson, N. J. (1971). STRIPS: A New Approach to the Application of Theorem Proving to Problem Solving. *Artificial Intelligence*.
-- Ghallab, M., Nau, D., & Traverso, P. (2004). *Automated Planning: Theory & Practice*.
-
----
-
-To jest template raportu. W zależności od szczegółów Twojego projektu możesz dostosować sekcje, szczególnie te związane z wynikami i wnioskami, a także dodać inne sekcje, takie jak analiza wyników eksperymentalnych czy planowane przyszłe rozszerzenia.
