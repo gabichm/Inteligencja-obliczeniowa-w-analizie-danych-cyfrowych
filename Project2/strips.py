@@ -1,9 +1,15 @@
 import sys
 import matplotlib.pyplot as plt
+import time
 sys.path.append("aipython")
 from aipython.searchMPP import SearcherMPP
 from aipython.stripsProblem import STRIPS_domain, Planning_problem, Strips
 from aipython.stripsForwardPlanner import Forward_STRIPS
+from aipython.stripsHeuristic import SimpleHeuristic, Forward_STRIPS_Heuristic
+
+
+# Zaczynamy pomiar czasu
+start_time = time.time()
 
 hospital_care_domain = STRIPS_domain(
     {
@@ -79,31 +85,31 @@ hospital_care_domain = STRIPS_domain(
                {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMedC': 0},
                {'EmptyHands': 1, 'HasMedA': 1}),
         Strips('COLLECT_MEDICATION_AA',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 1, 'HasMedB': 0, 'HasMedC': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 1, 'HasMedB': 0, 'HasMedC': 0},
                {'EmptyHands': 2, 'HasMedA': 2}),
         Strips('COLLECT_MEDICATION_AB',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 1, 'HasMedB': 0, 'HasMedC': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 1, 'HasMedB': 0, 'HasMedC': 0},
                {'EmptyHands': 2, 'HasMedB': 1}),
         Strips('COLLECT_MEDICATION_AC',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 1, 'HasMedB': 0, 'HasMedC': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 1, 'HasMedB': 0, 'HasMedC': 0},
                {'EmptyHands': 2, 'HasMedC': 1}),
         Strips('COLLECT_MEDICATION_BA',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMedB': 1, 'HasMedC': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMedB': 1, 'HasMedC': 0},
                {'EmptyHands': 2, 'HasMedA': 1}),
         Strips('COLLECT_MEDICATION_BB',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMed': 1, 'HasMedC': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMedB': 1, 'HasMedC': 0},
                {'EmptyHands': 2, 'HasMedB': 2}),
         Strips('COLLECT_MEDICATION_BC',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMed': 1, 'HasMedC': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMedB': 1, 'HasMedC': 0},
                {'EmptyHands': 2, 'HasMedC': 1}),
         Strips('COLLECT_MEDICATION_CA',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMedB': 0, 'HasMedC': 1},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMedB': 0, 'HasMedC': 1},
                {'EmptyHands': 2, 'HasMedA': 1}),
         Strips('COLLECT_MEDICATION_CB',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMed': 0, 'HasMedC': 1},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMedB': 0, 'HasMedC': 1},
                {'EmptyHands': 2, 'HasMedB': 1}),
         Strips('COLLECT_MEDICATION_CC',
-               {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMed': 0, 'HasMedC': 1},
+               {'NLoc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 0, 'HasMedB': 0, 'HasMedC': 1},
                {'EmptyHands': 2, 'HasMedC': 2}),
         
         # Mycie rąk
@@ -179,121 +185,129 @@ hospital_care_domain = STRIPS_domain(
                {'TookBreak': True}),
         # Rozmowa z pacjentem
         Strips('TALK_TO_PATIENT_P1',
-               {'NLoc': 'room', 'TalkToPatientP1': False},
-               {'TalkToPatientP1': True}),
+               {'NLoc': 'room', 'TalkToP1': False},
+               {'TalkToP1': True}),
         Strips('TALK_TO_PATIENT_P2',
-               {'NLoc': 'room', 'TalkToPatientP2': False},
-               {'TalkToPatientP2': True})
+               {'NLoc': 'room', 'TalkToP2': False},
+               {'TalkToP2': True})
     }
 )
-#  Prosty Problem 1
+# Prosty problem 1
 simple_problem1 = Planning_problem(
     hospital_care_domain,
-    {'NLoc': 'station',
-     'EmptyHands': 0,
-     'HasMedA': 0,
-     'NeedsMedP1A': True,
-     'HandsClean': False,
-     'CheckedChartP1': False},
-    {'NeedsMedP1A': False}  # Cel: Pacjent 1 otrzymał lek A
-)
-# Prosty problem 2
-simple_problem2 = Planning_problem(
-    hospital_care_domain,
-    {'NLoc': 'station',
-     'HandsClean': False,
-     'NeedsTestP2': True},
+    {
+        'NLoc': 'station',  # Pielęgniarka znajduje się na stacji
+        'EmptyHands': 0,  # Ręce pielęgniarki są puste
+        'HasMedA': 0,  # Pielęgniarka nie ma leku A
+        'HasMedB': 0,  # Pielęgniarka nie ma leku B
+        'HasMedC': 0,  # Pielęgniarka nie ma leku C
+        'NeedsMedP1A': True,  # Pacjent 1 potrzebuje leku A
+        'NeedsMedP1B': False,  # Pacjent 1 nie potrzebuje leku B
+        'NeedsMedP1C': False,  # Pacjent 1 nie potrzebuje leku C
+        'NeedsMedP2A': False,
+        'NeedsMedP2B': False,
+        'NeedsMedP2C': False,
+        'NeedsTestP1': False,  # Pacjent 1 nie potrzebuje testu
+        'NeedsTestP2': True,  # Pacjent 2 nie potrzebuje testu
+        'HandsClean': False,  # Ręce pielęgniarki są brudne
+        'CheckedChartP1': False,  # Karta pacjenta 1 nie została sprawdzona
+        'CheckedChartP2': False,  # Karta pacjenta 2 nie została sprawdzona
+        'UpToDateChartP1': False,  # Karta pacjenta 1 nie jest aktualna
+        'UpToDateChartP2': False,  # Karta pacjenta 2 nie jest aktualna
+        'TookBreak': False,  # Pielęgniarka nie zrobiła przerwy
+        'TalkToP1': False,  # Pielęgniarka nie rozmawiała z pacjentem 1
+        'TalkToP2': False, },
     {'NeedsTestP2': False}  # Cel: Test dla pacjenta 2 wykonany
 )
+#  Prosty Problem 2
+simple_problem2 = Planning_problem(
+    hospital_care_domain,
+    {
+        'NLoc': 'station',  # Pielęgniarka znajduje się na stacji
+        'EmptyHands': 0,  # Ręce pielęgniarki są puste
+        'HasMedA': 0,  # Pielęgniarka nie ma leku A
+        'HasMedB': 0,  # Pielęgniarka nie ma leku B
+        'HasMedC': 0,  # Pielęgniarka nie ma leku C
+        'NeedsMedP1A': True,  # Pacjent 1 potrzebuje leku A
+        'NeedsMedP1B': False,  # Pacjent 1 nie potrzebuje leku B
+        'NeedsMedP1C': False,  # Pacjent 1 nie potrzebuje leku C
+        'NeedsMedP2A': False,
+        'NeedsMedP2B': False,
+        'NeedsMedP2C': False,
+        'NeedsTestP1': False,  # Pacjent 1 nie potrzebuje testu
+        'NeedsTestP2': False,  # Pacjent 2 nie potrzebuje testu
+        'HandsClean': False,  # Ręce pielęgniarki są brudne
+        'CheckedChartP1': False,  # Karta pacjenta 1 nie została sprawdzona
+        'CheckedChartP2': False,  # Karta pacjenta 2 nie została sprawdzona
+        'UpToDateChartP1': False,  # Karta pacjenta 1 nie jest aktualna
+        'UpToDateChartP2': False,  # Karta pacjenta 2 nie jest aktualna
+        'TookBreak': False,  # Pielęgniarka nie zrobiła przerwy
+        'TalkToP1': False,  # Pielęgniarka nie rozmawiała z pacjentem 1
+        'TalkToP2': False,  # Pielęgniarka nie rozmawiała z pacjentem 2
+    },
+    {'NeedsMedP1A': False}  # Cel: Pacjent 1 otrzymał lek A
+)
+
+
 # Prosty Problem 3
 simple_problem3 = Planning_problem(
     hospital_care_domain,
-    {'NLoc': 'station',
-     'EmptyHands': 0,
-     'HasMedA': 0,
-     'HasMedB': 0,
-     'NeedsMedP1A': True,
-     'NeedsMedP1B': True,
-     'HandsClean': False,
-     'CheckedChartP1': False},
+    {
+        'NLoc': 'station',  # Pielęgniarka znajduje się na stacji
+        'EmptyHands': 0,  # Ręce pielęgniarki są puste
+        'HasMedA': 0,  # Pielęgniarka nie ma leku A
+        'HasMedB': 0,  # Pielęgniarka nie ma leku B
+        'HasMedC': 0,  # Pielęgniarka nie ma leku C
+        'NeedsMedP1A': True,  # Pacjent 1 potrzebuje leku A
+        'NeedsMedP1B': True,  # Pacjent 1 nie potrzebuje leku B
+        'NeedsMedP1C': False,  # Pacjent 1 nie potrzebuje leku C
+        'NeedsMedP2A': False,
+        'NeedsMedP2B': False,
+        'NeedsMedP2C': False,
+        'NeedsTestP1': False,  # Pacjent 1 nie potrzebuje testu
+        'NeedsTestP2': False,  # Pacjent 2 nie potrzebuje testu
+        'HandsClean': False,  # Ręce pielęgniarki są brudne
+        'CheckedChartP1': False,  # Karta pacjenta 1 nie została sprawdzona
+        'CheckedChartP2': False,  # Karta pacjenta 2 nie została sprawdzona
+        'UpToDateChartP1': False,  # Karta pacjenta 1 nie jest aktualna
+        'UpToDateChartP2': False,  # Karta pacjenta 2 nie jest aktualna
+        'TookBreak': False,  # Pielęgniarka nie zrobiła przerwy
+        'TalkToP1': False,  # Pielęgniarka nie rozmawiała z pacjentem 1
+        'TalkToP2': False, },
     {'NeedsMedP1A': False, 'NeedsMedP1B': False}  # Cel: Pacjent 1 otrzymał oba leki
 )
 
 
 
-
+# # Tworzenie planera STRIPS
+# planner = Forward_STRIPS(simple_problem3)
 #
-# problem1 = Planning_problem(
-#     hospital_care_domain,
-#     {  # Stan początkowy
-#         'NLoc': 'station',    # Pielęgniarka startuje w stacji
-#         'HasMed': False,      # Nie ma leku
-#         'NeedsMedP1': True,   # Pacjent 1 potrzebuje leku
-#         'NeedsMedP2': False,  # Pacjent 2 nie potrzebuje leku
-#         'NeedsTestP1': False, # Pacjent 1 nie potrzebuje testu
-#         'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
-#         'HandsClean': False,  # Ręce pielęgniarki są brudne
-#         'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
-#         'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
-#     },
-#     {  # Cel - co chcemy osiągnąć?
-#         'NeedsMedP1': False,  # Pacjent 1 ma dostać lek
-#         'NeedsTestP2': False  # Pacjent 2 ma mieć wykonany test
-#     }
-# )
+# # Tworzenie wyszukiwarki
+# search = SearcherMPP(planner)
 #
-# problem2 = Planning_problem(
-#     hospital_care_domain,
-#     {  # Stan początkowy
-#         'NLoc': 'station',    # Pielęgniarka startuje w stacji
-#         'HasMed': False,      # Nie ma leku
-#         'NeedsMedP2': True,   # Pacjent 2 potrzebuje leku
-#         'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
-#         'NeedsMedP1': False,  # Pacjent 1 nie potrzebuje leku
-#         'NeedsTestP1': False, # Pacjent 1 nie potrzebuje testu
-#         'HandsClean': False,  # Ręce pielęgniarki są brudne
-#         'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
-#         'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
-#     },
-#     {  # Cel - co chcemy osiągnąć?
-#         'NeedsMedP2': False,  # Pacjent 2 ma dostać lek
-#         'NeedsTestP2': False, # Pacjent 2 ma mieć wykonany test
-#         'CheckedChartP2': True  # Karta pacjenta 2 ma być sprawdzona
-#     }
-# )
-#
-# problem3 = Planning_problem(
-#     hospital_care_domain,
-#     {  # Stan początkowy
-#         'NLoc': 'station',    # Pielęgniarka startuje w stacji
-#         'HasMed': False,      # Nie ma leku
-#         'NeedsMedP1': True,   # Pacjent 1 potrzebuje leku
-#         'NeedsMedP2': True,   # Pacjent 2 potrzebuje leku
-#         'NeedsTestP1': True,  # Pacjent 1 potrzebuje testu
-#         'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
-#         'HandsClean': False,  # Ręce pielęgniarki są brudne
-#         'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
-#         'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
-#     },
-#     {  # Cel - co chcemy osiągnąć?
-#         'NeedsMedP1': False,  # Pacjent 1 ma dostać lek
-#         'NeedsMedP2': False,  # Pacjent 2 ma dostać lek
-#         'NeedsTestP1': False, # Pacjent 1 ma mieć wykonany test
-#         'NeedsTestP2': False, # Pacjent 2 ma mieć wykonany test
-#         'CheckedChartP1': True, # Karta pacjenta 1 ma być sprawdzona
-#         'CheckedChartP2': True  # Karta pacjenta 2 ma być sprawdzona
-#     }
-# )
+# # Wyszukiwanie rozwiązania
+# solution = search.search()
 
-# Tworzenie planera STRIPS
-planner = Forward_STRIPS(simple_problem1)
+# Create the planner using your heuristic
+heuristic = HospitalCareHeuristic(simple_problem3)
 
-# Tworzenie wyszukiwarki
-search = SearcherMPP(planner)
+# Create a planner with the heuristic
+planner_with_heuristic = Forward_STRIPS_Heuristic(simple_problem3, heuristic)
 
-# Wyszukiwanie rozwiązania
-solution = search.search()
+# Create the searcher
+search_with_heuristic = SearcherMPP(planner_with_heuristic)
+
+# Search for the solution
+solution_with_heuristic = search_with_heuristic.search()
+
+
 
 # Wyświetlenie znalezionego planu
-print(solution)
+end_time = time.time()
+print(solution_with_heuristic)
+
+
+# Wyświetlenie znalezionego planu
+# print(solution)
+print(end_time-start_time)
 
