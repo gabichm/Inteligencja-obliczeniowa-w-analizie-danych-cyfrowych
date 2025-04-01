@@ -78,3 +78,35 @@ def test_regression_heuristic(thisproblem=stripsProblem.problem1):
 
 if __name__ == "__main__":
     test_regression_heuristic()
+
+
+def h_break(state, goal):
+    """Heurystyka dla przerwy pielęgniarki.
+    Zwraca 1, jeśli pielęgniarka nie miała przerwy, ale jest w 'station',
+    inaczej zwraca 0.
+    """
+    if 'TookBreak' in goal and goal['TookBreak'] == False and state['TookBreak'] == False:
+        return 1 if state['NLoc'] == 'station' else 2  # Wyższa wartość jeśli nie jest w 'station'
+    return 0
+
+
+def h_talk(state, goal):
+    """Heurystyka dla rozmowy z pacjentem.
+    Jeśli pacjent wymaga rozmowy przed leczeniem, zwracamy 1.
+    """
+    talk_p1_needed = 'TalkedToP1' in goal and goal['TalkedToP1'] == False and state['TalkedToP1'] == False
+    talk_p2_needed = 'TalkedToP2' in goal and goal['TalkedToP2'] == False and state['TalkedToP2'] == False
+
+    if talk_p1_needed or talk_p2_needed:
+        return 1
+    return 0
+
+
+def h_extended(state, goal):
+    """Rozszerzona heurystyka uwzględniająca rozmowę, przerwę i higienę."""
+    return max(h1(state, goal), h2(state, goal), h_break(state, goal), h_talk(state, goal))
+
+
+def h_full(state, goal):
+    """Pełna heurystyka łącząca wszystkie wcześniejsze."""
+    return max(h1(state, goal), h2(state, goal), h_break(state, goal), h_talk(state, goal), h_extended(state, goal))

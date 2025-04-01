@@ -24,7 +24,10 @@ hospital_care_domain = STRIPS_domain(
         'CheckedChartP1': {False, True},  # Czy pielęgniarka sprawdziła kartę pacjenta
         'CheckedChartP2': {False, True},
         'UpToDateChartP1': {False, True},  # Karta pacjenta aktualna?
-        'UpToDateChartP2': {False, True}
+        'UpToDateChartP2': {False, True},
+        'TookBreak': {False, True},
+        'TalkToP1': {False, True},
+        'TalkToP2': {False, True}
     },
     {
         # Przemieszczanie pielęgniarki
@@ -67,13 +70,13 @@ hospital_care_domain = STRIPS_domain(
         
         # Pobranie leku
         Strips('COLLECT_MEDICATION_A',
-               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMed': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMedC': 0},
                {'EmptyHands': 1, 'HasMedA': 1}),
         Strips('COLLECT_MEDICATION_B',
-               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMed': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMedC': 0},
                {'EmptyHands': 1, 'HasMedB': 1}),
         Strips('COLLECT_MEDICATION_C',
-               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMed': 0},
+               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMedC': 0},
                {'EmptyHands': 1, 'HasMedA': 1}),
         Strips('COLLECT_MEDICATION_AA',
                {'Nloc': 'pharmacy', 'EmptyHands': 1, 'HasMedA': 1, 'HasMedB': 0, 'HasMedC': 0},
@@ -168,74 +171,122 @@ hospital_care_domain = STRIPS_domain(
                {'UpToDateChartP1': True}),
         Strips('UPDATE_CHART_p2',
                {'NLoc': 'room', 'UpToDateChartP2': False},
-               {'UpToDateChartP2': True})
+               {'UpToDateChartP2': True}),
+
+        # Przerwa na kawę
+        Strips('TAKE_BREAK',
+               {'NLoc': 'station', 'TookBreak': False},
+               {'TookBreak': True}),
+        # Rozmowa z pacjentem
+        Strips('TALK_TO_PATIENT_P1',
+               {'NLoc': 'room', 'TalkToPatientP1': False},
+               {'TalkToPatientP1': True}),
+        Strips('TALK_TO_PATIENT_P2',
+               {'NLoc': 'room', 'TalkToPatientP2': False},
+               {'TalkToPatientP2': True})
     }
+)
+#  Prosty Problem 1
+simple_problem1 = Planning_problem(
+    hospital_care_domain,
+    {'NLoc': 'station',
+     'EmptyHands': 0,
+     'HasMedA': 0,
+     'NeedsMedP1A': True,
+     'HandsClean': False,
+     'CheckedChartP1': False},
+    {'NeedsMedP1A': False}  # Cel: Pacjent 1 otrzymał lek A
+)
+# Prosty problem 2
+simple_problem2 = Planning_problem(
+    hospital_care_domain,
+    {'NLoc': 'station',
+     'HandsClean': False,
+     'NeedsTestP2': True},
+    {'NeedsTestP2': False}  # Cel: Test dla pacjenta 2 wykonany
+)
+# Prosty Problem 3
+simple_problem3 = Planning_problem(
+    hospital_care_domain,
+    {'NLoc': 'station',
+     'EmptyHands': 0,
+     'HasMedA': 0,
+     'HasMedB': 0,
+     'NeedsMedP1A': True,
+     'NeedsMedP1B': True,
+     'HandsClean': False,
+     'CheckedChartP1': False},
+    {'NeedsMedP1A': False, 'NeedsMedP1B': False}  # Cel: Pacjent 1 otrzymał oba leki
 )
 
-problem1 = Planning_problem(
-    hospital_care_domain,
-    {  # Stan początkowy
-        'NLoc': 'station',    # Pielęgniarka startuje w stacji
-        'HasMed': False,      # Nie ma leku
-        'NeedsMedP1': True,   # Pacjent 1 potrzebuje leku
-        'NeedsMedP2': False,  # Pacjent 2 nie potrzebuje leku
-        'NeedsTestP1': False, # Pacjent 1 nie potrzebuje testu
-        'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
-        'HandsClean': False,  # Ręce pielęgniarki są brudne
-        'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
-        'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
-    },
-    {  # Cel - co chcemy osiągnąć?
-        'NeedsMedP1': False,  # Pacjent 1 ma dostać lek
-        'NeedsTestP2': False  # Pacjent 2 ma mieć wykonany test
-    }
-)
 
-problem2 = Planning_problem(
-    hospital_care_domain,
-    {  # Stan początkowy
-        'NLoc': 'station',    # Pielęgniarka startuje w stacji
-        'HasMed': False,      # Nie ma leku
-        'NeedsMedP2': True,   # Pacjent 2 potrzebuje leku
-        'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
-        'NeedsMedP1': False,  # Pacjent 1 nie potrzebuje leku
-        'NeedsTestP1': False, # Pacjent 1 nie potrzebuje testu
-        'HandsClean': False,  # Ręce pielęgniarki są brudne
-        'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
-        'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
-    },
-    {  # Cel - co chcemy osiągnąć?
-        'NeedsMedP2': False,  # Pacjent 2 ma dostać lek
-        'NeedsTestP2': False, # Pacjent 2 ma mieć wykonany test
-        'CheckedChartP2': True  # Karta pacjenta 2 ma być sprawdzona
-    }
-)
 
-problem3 = Planning_problem(
-    hospital_care_domain,
-    {  # Stan początkowy
-        'NLoc': 'station',    # Pielęgniarka startuje w stacji
-        'HasMed': False,      # Nie ma leku
-        'NeedsMedP1': True,   # Pacjent 1 potrzebuje leku
-        'NeedsMedP2': True,   # Pacjent 2 potrzebuje leku
-        'NeedsTestP1': True,  # Pacjent 1 potrzebuje testu
-        'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
-        'HandsClean': False,  # Ręce pielęgniarki są brudne
-        'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
-        'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
-    },
-    {  # Cel - co chcemy osiągnąć?
-        'NeedsMedP1': False,  # Pacjent 1 ma dostać lek
-        'NeedsMedP2': False,  # Pacjent 2 ma dostać lek
-        'NeedsTestP1': False, # Pacjent 1 ma mieć wykonany test
-        'NeedsTestP2': False, # Pacjent 2 ma mieć wykonany test
-        'CheckedChartP1': True, # Karta pacjenta 1 ma być sprawdzona
-        'CheckedChartP2': True  # Karta pacjenta 2 ma być sprawdzona
-    }
-)
+
+#
+# problem1 = Planning_problem(
+#     hospital_care_domain,
+#     {  # Stan początkowy
+#         'NLoc': 'station',    # Pielęgniarka startuje w stacji
+#         'HasMed': False,      # Nie ma leku
+#         'NeedsMedP1': True,   # Pacjent 1 potrzebuje leku
+#         'NeedsMedP2': False,  # Pacjent 2 nie potrzebuje leku
+#         'NeedsTestP1': False, # Pacjent 1 nie potrzebuje testu
+#         'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
+#         'HandsClean': False,  # Ręce pielęgniarki są brudne
+#         'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
+#         'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
+#     },
+#     {  # Cel - co chcemy osiągnąć?
+#         'NeedsMedP1': False,  # Pacjent 1 ma dostać lek
+#         'NeedsTestP2': False  # Pacjent 2 ma mieć wykonany test
+#     }
+# )
+#
+# problem2 = Planning_problem(
+#     hospital_care_domain,
+#     {  # Stan początkowy
+#         'NLoc': 'station',    # Pielęgniarka startuje w stacji
+#         'HasMed': False,      # Nie ma leku
+#         'NeedsMedP2': True,   # Pacjent 2 potrzebuje leku
+#         'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
+#         'NeedsMedP1': False,  # Pacjent 1 nie potrzebuje leku
+#         'NeedsTestP1': False, # Pacjent 1 nie potrzebuje testu
+#         'HandsClean': False,  # Ręce pielęgniarki są brudne
+#         'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
+#         'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
+#     },
+#     {  # Cel - co chcemy osiągnąć?
+#         'NeedsMedP2': False,  # Pacjent 2 ma dostać lek
+#         'NeedsTestP2': False, # Pacjent 2 ma mieć wykonany test
+#         'CheckedChartP2': True  # Karta pacjenta 2 ma być sprawdzona
+#     }
+# )
+#
+# problem3 = Planning_problem(
+#     hospital_care_domain,
+#     {  # Stan początkowy
+#         'NLoc': 'station',    # Pielęgniarka startuje w stacji
+#         'HasMed': False,      # Nie ma leku
+#         'NeedsMedP1': True,   # Pacjent 1 potrzebuje leku
+#         'NeedsMedP2': True,   # Pacjent 2 potrzebuje leku
+#         'NeedsTestP1': True,  # Pacjent 1 potrzebuje testu
+#         'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
+#         'HandsClean': False,  # Ręce pielęgniarki są brudne
+#         'CheckedChartP1': False, # Karta pacjenta 1 nie została sprawdzona
+#         'CheckedChartP2': False  # Karta pacjenta 2 nie została sprawdzona
+#     },
+#     {  # Cel - co chcemy osiągnąć?
+#         'NeedsMedP1': False,  # Pacjent 1 ma dostać lek
+#         'NeedsMedP2': False,  # Pacjent 2 ma dostać lek
+#         'NeedsTestP1': False, # Pacjent 1 ma mieć wykonany test
+#         'NeedsTestP2': False, # Pacjent 2 ma mieć wykonany test
+#         'CheckedChartP1': True, # Karta pacjenta 1 ma być sprawdzona
+#         'CheckedChartP2': True  # Karta pacjenta 2 ma być sprawdzona
+#     }
+# )
 
 # Tworzenie planera STRIPS
-planner = Forward_STRIPS(problem1)
+planner = Forward_STRIPS(simple_problem1)
 
 # Tworzenie wyszukiwarki
 search = SearcherMPP(planner)
