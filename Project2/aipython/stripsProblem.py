@@ -318,6 +318,90 @@ simple_problem3 = Planning_problem(
     {'NeedsMedP1A': False, 'NeedsMedP1B': False}  # Cel: Pacjent 1 otrzymał oba leki
 )
 
+subproblem_1 =  Planning_problem(
+    hospital_care_domain,
+    {
+        'NLoc': 'station',  # Pielęgniarka znajduje się na stacji
+        'EmptyHands': 0,  # Ręce pielęgniarki są puste
+        'HasMedA': 0,  # Pielęgniarka nie ma leku A
+        'HasMedB': 0,  # Pielęgniarka nie ma leku B
+        'HasMedC': 0,  # Pielęgniarka nie ma leku C
+        'NeedsMedP1A': True,  # Pacjent 1 potrzebuje leku A
+        'NeedsMedP1B': True,  # Pacjent 1 nie potrzebuje leku B
+        'NeedsMedP1C': False,  # Pacjent 1 nie potrzebuje leku C
+        'NeedsMedP2A': False,
+        'NeedsMedP2B': False,
+        'NeedsMedP2C': False,
+        'NeedsTestP1': False,  # Pacjent 1 nie potrzebuje testu
+        'NeedsTestP2': False,  # Pacjent 2 nie potrzebuje testu
+        'HandsClean': False,  # Ręce pielęgniarki są brudne
+        'CheckedChartP1': False,  # Karta pacjenta 1 nie została sprawdzona
+        'CheckedChartP2': False,  # Karta pacjenta 2 nie została sprawdzona
+        'UpToDateChartP1': False,  # Karta pacjenta 1 nie jest aktualna
+        'UpToDateChartP2': False,  # Karta pacjenta 2 nie jest aktualna
+        'TookBreak': False,  # Pielęgniarka nie zrobiła przerwy
+        'TalkToP1': False,  # Pielęgniarka nie rozmawiała z pacjentem 1
+        'TalkToP2': False, },
+    {'NeedsMedP1A': False, 'NeedsMedP1B': False, 'TookBreak' : True}  # Cel: Pacjent 1 otrzymał oba leki
+)
+
+subproblem_2 = Planning_problem(
+    hospital_care_domain,
+    {
+        'NLoc': 'station',  # Pielęgniarka znajduje się na stacji
+        'EmptyHands': 0,  # Ręce pielęgniarki są puste
+        'HasMedA': 0,  # Pielęgniarka nie ma leku A
+        'HasMedB': 0,  # Pielęgniarka nie ma leku B
+        'HasMedC': 0,  # Pielęgniarka nie ma leku C
+        'NeedsMedP1A': True,  # Pacjent 1 potrzebuje leku A
+        'NeedsMedP1B': False,  # Pacjent 1 nie potrzebuje leku B
+        'NeedsMedP1C': False,  # Pacjent 1 nie potrzebuje leku C
+        'NeedsMedP2A': False,  # Pacjent 2 nie potrzebuje leku A
+        'NeedsMedP2B': False,  # Pacjent 2 nie potrzebuje leku B
+        'NeedsMedP2C': False,  # Pacjent 2 nie potrzebuje leku C
+        'NeedsTestP1': False,  # Pacjent 1 nie potrzebuje testu
+        'NeedsTestP2': False,  # Pacjent 2 nie potrzebuje testu
+        'HandsClean': False,  # Ręce pielęgniarki są brudne
+        'CheckedChartP1': False,  # Karta pacjenta 1 nie została sprawdzona
+        'CheckedChartP2': False,  # Karta pacjenta 2 nie została sprawdzona
+        'UpToDateChartP1': False,  # Karta pacjenta 1 nie jest aktualna
+        'UpToDateChartP2': False,  # Karta pacjenta 2 nie jest aktualna
+        'TookBreak': False,  # Pielęgniarka nie zrobiła przerwy
+        'TalkToP1': False,  # Pielęgniarka nie rozmawiała z pacjentem 1
+        'TalkToP2': False,  # Pielęgniarka nie rozmawiała z pacjentem 2
+    },
+    {'UpToDateChartP1': True, 'TookBreak': True, 'TalkToP1': True, 'NeedsMedP1A': False}  # Cel: zaktualizowana karta pacjenta 1, przerwa, rozmowa i podanie leku
+)
+
+subproblem_3= Planning_problem(
+    hospital_care_domain,
+    {
+        'NLoc': 'station',  # Pielęgniarka znajduje się na stacji
+        'EmptyHands': 0,  # Ręce pielęgniarki są puste
+        'HasMedA': 0,  # Pielęgniarka nie ma leku A
+        'HasMedB': 0,  # Pielęgniarka nie ma leku B
+        'HasMedC': 0,  # Pielęgniarka nie ma leku C
+        'NeedsMedP1A': False,  # Pacjent 1 nie potrzebuje leku A
+        'NeedsMedP1B': False,  # Pacjent 1 nie potrzebuje leku B
+        'NeedsMedP1C': False,  # Pacjent 1 nie potrzebuje leku C
+        'NeedsMedP2A': False,  # Pacjent 2 nie potrzebuje leku A
+        'NeedsMedP2B': False,  # Pacjent 2 nie potrzebuje leku B
+        'NeedsMedP2C': False,  # Pacjent 2 nie potrzebuje leku C
+        'NeedsTestP1': False,  # Pacjent 1 nie potrzebuje testu
+        'NeedsTestP2': True,  # Pacjent 2 potrzebuje testu
+        'HandsClean': False,  # Ręce pielęgniarki są brudne
+        'CheckedChartP1': False,  # Karta pacjenta 1 nie została sprawdzona
+        'CheckedChartP2': False,  # Karta pacjenta 2 nie została sprawdzona
+        'UpToDateChartP1': False,  # Karta pacjenta 1 nie jest aktualna
+        'UpToDateChartP2': False,  # Karta pacjenta 2 nie jest aktualna
+        'TookBreak': False,  # Pielęgniarka nie zrobiła przerwy
+        'TalkToP1': False,  # Pielęgniarka nie rozmawiała z pacjentem 1
+        'TalkToP2': False,  # Pielęgniarka nie rozmawiała z pacjentem 2
+    },
+    {'CheckedChartP2': True, 'NeedsTestP2': False, 'TookBreak': True, 'TalkToP2': True}  # Cel: zaktualizowana karta pacjenta 2, test wykonany, przerwa, rozmowa
+)
+
+
 # problem0 = Planning_problem(delivery_domain,
 #                             {'RLoc':'lab', 'MW':True, 'SWC':True, 'RHC':False,
 #                              'RHM':False},
