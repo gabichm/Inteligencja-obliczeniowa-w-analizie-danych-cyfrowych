@@ -127,7 +127,7 @@ def test_forward_heuristic(thisproblem=stripsProblem.simple_problem2):
     # print("\n***** FORWARD NO HEURISTIC")
     # print(SearcherMPP(Forward_STRIPS(thisproblem)).search())
 
-    # print("\n***** FORWARD WITH HEURISTIC h_nurse_movement")
+    # print("\n***** FORWARD WITH HEURISTIC h_hand_hygiene")
     # print(SearcherMPP(Forward_STRIPS(thisproblem,h_hand_hygiene)).search())
     #
     # print("\n***** FORWARD WITH HEURISTIC h_pending_tasks")
@@ -145,6 +145,8 @@ from stripsRegressionPlanner import Regression_STRIPS
 # def test_regression_heuristic(thisproblem=stripsProblem.simple_problem1):
 #     print("\n***** REGRESSION NO HEURISTIC")
 #     print(SearcherMPP(Regression_STRIPS(thisproblem)).search())
+
+
 #
 #     print("\n***** REGRESSION WITH HEURISTICs h1 and h2")
 #     print(SearcherMPP(Regression_STRIPS(thisproblem,maxh(h_hand_hygiene, h_pending_tasks))).search())
@@ -160,10 +162,10 @@ from stripsRegressionPlanner import Regression_STRIPS
 #     solution = search.search()
 #     print(solution)
 
-if __name__ == "__main__":
-    start_time = time.time()
-    normal_search()
-    end_time = time.time()
-    print(end_time - start_time)
+# if __name__ == "__main__":
+#     start_time = time.time()
+#     normal_search()
+#     end_time = time.time()
+#     print(end_time - start_time)
 
 
