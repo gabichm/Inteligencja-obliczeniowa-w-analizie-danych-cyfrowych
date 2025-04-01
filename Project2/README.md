@@ -137,12 +137,14 @@ Po uruchomieniu systemu planowania, czas rozwiązania problemu wahał się w zal
 - Dla prostych problemów czas rozwiązania wynosił 0.12 sekundy,
 - Dla bardziej złożonych problemów (np. większa liczba pacjentów, większa liczba lokalizacji) czas rozwiązania wynosił 0.56 sekundy.
 
-| Problem | Bez Heurystyki| Forward Heuristics| Regression Heuristics |
-|-----------|-----------|-----------|---------| ----------------------|
-| simple_problem1| 0.08 | 0.47 | 0.31
-| simple_problem2| 10.824563026428223 | 8.01|
-| simple_problem3| 36.17594504356384 | Wartość 9 |
-
+| Problem          | Bez Heurystyki | Forward Heuristic Hands | Forward Heuristic Tasks | Forward Heuristics Both |
+|-----------------|----------------|-------------------------|-------------------------|-------------------------|
+| simple_problem1 | 0.029          | 0.122                   | 0.011                   | 0.015                   |
+| simple_problem2 | 10.99          | 18.18                   | 1.979                   | 10.804                  |
+| simple_problem3 | 34.22          | 40.78                   | 31.009                  | 33.811                  |
+| subproblem1     | 41.080         | 42.372                  | 37.859                  | 40.560                  |
+| subproblem2     | 25.901         | 34.293                  | 21.556                  | 26.588                  |
+| subproblem3     | 4.111          | 10.203                  | 1.137                   | 4.540                   |
 
 ---
 
