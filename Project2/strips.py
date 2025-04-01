@@ -1,92 +1,79 @@
 import sys
 import matplotlib.pyplot as plt
-sys.path.append("C:\\Users\\Gabrysia\\PycharmProjects\\Inteligencja-obliczeniowa\\aipython")
+sys.path.append("aipython")
 from aipython.searchMPP import SearcherMPP
 from aipython.stripsProblem import STRIPS_domain, Planning_problem, Strips
 from aipython.stripsForwardPlanner import Forward_STRIPS
 
-
 hospital_care_domain = STRIPS_domain(
     {
-        'NLoc': {'station', 'room1', 'room2', 'pharmacy', 'sink'},  # Lokalizacja pielęgniarki
-        'HasMed': {False, True},  # Czy pielęgniarka ma lek
-        'NeedsMedP1': {False, True},  # Czy pacjent potrzebuje leku
-        'NeedsMedP2': {False, True},
+        'NLoc': {'station', 'room', 'pharmacy', 'sink'},  # Lokalizacja pielęgniarki
+        'EmptyHands': {0, 1, 2},
+        'HasMedA': {0, 1, 2},
+        'HasMedB': {0, 1, 2},
+        'HasMedC': {0, 1, 2},
+        'NeedsMedP1A': {True, False},
+        'NeedsMedP2A': {True, False},
+        'NeedsMedP1B': {True, False},
+        'NeedsMedP2B': {True, False},
+        'NeedsMedP1C': {True, False},
+        'NeedsMedP2C': {True, False},
         'NeedsTestP1': {False, True},  # Czy pacjent potrzebuje testu
         'NeedsTestP2': {False, True},
         'HandsClean': {False, True},  # Czy pielęgniarka ma czyste ręce
         'CheckedChartP1': {False, True},  # Czy pielęgniarka sprawdziła kartę pacjenta
-        'CheckedChartP2': {False, True}
+        'CheckedChartP2': {False, True},
+        'UpToDateChartP1': {False, True},  # Karta pacjenta aktualna?
+        'UpToDateChartP2': {False, True}
     },
     {
         # Przemieszczanie pielęgniarki
-        Strips('MOVE_NURSE_s_r1',
+        Strips('MOVE_NURSE_s_r',
                {'NLoc': 'station'},
-               {'NLoc': 'room1'}),
-        Strips('MOVE_NURSE_s_r2',
-               {'NLoc': 'station'},
-               {'NLoc': 'room2'}),
+               {'NLoc': 'room'}),
         Strips('MOVE_NURSE_s_ph',
               {'NLoc': 'station'},
               {'NLoc': 'pharmacy'}),
         Strips('MOVE_NURSE_s_sink',
                {'NLoc': 'station'},
                {'NLoc': 'sink'}),
-        Strips('MOVE_NURSE_r1_s',
-               {'NLoc': 'room1'},
+        Strips('MOVE_NURSE_r_s',
+               {'NLoc': 'room'},
                {'NLoc': 'station'}),
-        Strips('MOVE_NURSE_r1_r2',
-               {'NLoc': 'room1'},
-               {'NLoc': 'room2'}),
-        Strips('MOVE_NURSE_r1_ph',
-               {'NLoc': 'room1'},
+        Strips('MOVE_NURSE_r_ph',
+               {'NLoc': 'room'},
                {'NLoc': 'pharmacy'}),
-        Strips('MOVE_NURSE_r1_sink',
-               {'NLoc': 'room1'},
+        Strips('MOVE_NURSE_r_sink',
+               {'NLoc': 'room'},
                {'NLoc': 'sink'}),
-        Strips('MOVE_NURSE_r2_r1',
-               {'NLoc': 'room2'},
-               {'NLoc': 'room1'}),
-        Strips('MOVE_NURSE_r2_s',
-               {'NLoc': 'room2'},
-               {'NLoc': 'station'}),
-        Strips('MOVE_NURSE_r2_ph',
-               {'NLoc': 'room2'},
-               {'NLoc': 'pharmacy'}),
-        Strips('MOVE_NURSE_r2_sink',
-               {'NLoc': 'room2'},
-               {'NLoc': 'sink'}),
-        Strips('MOVE_NURSE_ph_r1',
+        Strips('MOVE_NURSE_ph_r',
                {'NLoc': 'pharmacy'},
-               {'NLoc': 'room1'}),
-        Strips('MOVE_NURSE_ph_r2',
-               {'NLoc': 'pharmacy'},
-               {'NLoc': 'room2'}),
+               {'NLoc': 'room'}),
         Strips('MOVE_NURSE_ph_s',
                {'NLoc': 'pharmacy'},
                {'NLoc': 'station'}),
         Strips('MOVE_NURSE_ph_sink',
                {'NLoc': 'pharmacy'},
                {'NLoc': 'sink'}),
-        Strips('MOVE_NURSE_sink_r1',
+        Strips('MOVE_NURSE_sink_r',
                {'NLoc': 'sink'},
-               {'NLoc': 'room1'}),
-        Strips('MOVE_NURSE_sink_r2',
-               {'NLoc': 'sink'},
-               {'NLoc': 'room2'}),
+               {'NLoc': 'room'}),
         Strips('MOVE_NURSE_sink_ph',
                {'NLoc': 'sink'},
                {'NLoc': 'pharmacy'}),
         Strips('MOVE_NURSE_sink_station',
                {'NLoc': 'sink'},
                {'NLoc': 'station'}),
-        
         # Pobranie leku
-        Strips('COLLECT_MEDICATION',
-               {'NLoc': 'pharmacy'},
-               {'HasMed': True}),
-        
-
+        Strips('COLLECT_MEDICATION_A',
+               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMed': 0},
+               {'EmptyHands': 1, 'HasMedA': 1}),
+        Strips('COLLECT_MEDICATION_B',
+               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMed': 0},
+               {'EmptyHands': 1, 'HasMedB': 1}),
+        Strips('COLLECT_MEDICATION_C',
+               {'NLoc': 'pharmacy', 'EmptyHands': 0, 'HasMedA': 0, 'HasMedB': 0, 'HasMed' : 0},
+               {'EmptyHands': 1, 'HasMedA': 1}),
         # Mycie rąk
         Strips('WASH_HANDS',
                {'NLoc': 'sink'},
@@ -94,27 +81,35 @@ hospital_care_domain = STRIPS_domain(
 
         # Sprawdzenie karty pacjenta
         Strips('CHECK_CHART_p1',
-               {'NLoc': 'room1', 'CheckedChartP1': False},
-               {'CheckedChartP1': True}),
+               {'NLoc': 'room', 'CheckedChartP1': False},
+               {'CheckedChartP1': True, 'HandsClean': False}),
         Strips('CHECK_CHART_p2',
-               {'NLoc': 'room2', 'CheckedChartP2': False},
-               {'CheckedChartP2': True}),
+               {'NLoc': 'room', 'CheckedChartP2': False},
+               {'CheckedChartP2': True, 'HandsClean': False}),
 
         # Podanie leku
         Strips('ADMINISTER_MEDICATION_p1',
-               {'NLoc': 'room1', 'HasMed': True, 'NeedsMedP1': True, 'HandsClean': True, 'CheckedChartP1': True},
-               {'NeedsMedP1': False, 'HasMed': False}),
+               {'NLoc': 'room', 'HasMed': True, 'NeedsMedP1': True, 'HandsClean': True, 'CheckedChartP1': True},
+               {'NeedsMedP1': False, 'HasMed': False, 'HandsClean': False}),
         Strips('ADMINISTER_MEDICATION_p2',
-               {'NLoc': 'room2', 'HasMed': True, 'NeedsMedP2': True, 'HandsClean': True, 'CheckedChartP2': True},
-               {'NeedsMedP2': False, 'HasMed': False}),
+               {'NLoc': 'room', 'HasMed': True, 'NeedsMedP2': True, 'HandsClean': True, 'CheckedChartP2': True},
+               {'NeedsMedP2': False, 'HasMed': False, 'HandsClean': False}),
 
         # Przeprowadzenie testu
         Strips('CONDUCT_TEST_p1',
-               {'NLoc': 'room1', 'NeedsTestP1': True},
-               {'NeedsTestP1': False}),
+               {'NLoc': 'room', 'NeedsTestP1': True, 'HandsClean': True},
+               {'NeedsTestP1': False, 'HandsClean': False}),
         Strips('CONDUCT_TEST_p2',
-               {'NLoc': 'room2', 'NeedsTestP2': True},
-               {'NeedsTestP2': False})
+               {'NLoc': 'room', 'NeedsTestP2': True, 'HandsClean': True},
+               {'NeedsTestP2': False, 'HandsClean': False }),
+
+        # Dodanie informacji do karty pacjenta
+        Strips('UPDATE_CHART_p1',
+               {'NLoc': 'room', 'UpToDateChartP1': False},
+               {'UpToDateChartP1': True}),
+        Strips('UPDATE_CHART_p2',
+               {'NLoc': 'room', 'UpToDateChartP2': False},
+               {'UpToDateChartP2': True})
     }
 )
 
