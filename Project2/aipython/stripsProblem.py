@@ -64,12 +64,12 @@ hospital_care_domain = STRIPS_domain(
         'NeedsMedP2B': {True, False},
         'NeedsMedP1C': {True, False},
         'NeedsMedP2C': {True, False},
-        'NeedsTestP1': {False, True},  # Czy pacjent potrzebuje testu
+        'NeedsTestP1': {False, True},  
         'NeedsTestP2': {False, True},
-        'HandsClean': {False, True},  # Czy pielęgniarka ma czyste ręce
-        'CheckedChartP1': {False, True},  # Czy pielęgniarka sprawdziła kartę pacjenta
+        'HandsClean': {False, True},  
+        'CheckedChartP1': {False, True},  
         'CheckedChartP2': {False, True},
-        'UpToDateChartP1': {False, True},  # Karta pacjenta aktualna?
+        'UpToDateChartP1': {False, True},  
         'UpToDateChartP2': {False, True},
         'TookBreak': {False, True},
         'TalkToP1': {False, True},
@@ -276,7 +276,8 @@ simple_problem1 = Planning_problem( # Cele: pacjent 2 test| Podcele: aktualizacj
         'TookBreak': False,  
         'TalkToP1': False,  
         'TalkToP2': False, },
-    {'NeedsTestP2': False, 'UpToDateChartP1' : True, 'UpToDateChartP2': True}
+    {'NeedsTestP2': False#, 'UpToDateChartP1' : True, 'UpToDateChartP2': True}
+     }
 )
 #  Prosty Problem 2
 simple_problem2 = Planning_problem( # Cele: pacjent 1 lek A | Podcele: Przerwa, rozmowa p2
@@ -304,7 +305,8 @@ simple_problem2 = Planning_problem( # Cele: pacjent 1 lek A | Podcele: Przerwa, 
         'TalkToP1': False,  
         'TalkToP2': False,  
     },
-    {'NeedsMedP1A': False, 'TalkToP2' : True, 'TookBreak' : True}  
+    {'NeedsMedP1A': False#, 'TalkToP2' : True, 'TookBreak' : True} 
+     }
 )
 
 
@@ -333,7 +335,8 @@ simple_problem3 = Planning_problem( # Cele: pacjent 1 - lek A i B| Podcele: rozm
         'TookBreak': True,  
         'TalkToP1': False, 
         'TalkToP2': False, },
-    {'NeedsMedP1A': False, 'NeedsMedP1B': False, 'TalkToP1': True, 'UpToDateChartP1': True}  
+    {'NeedsMedP1A': False, 'NeedsMedP1B': False#, 'TalkToP1': True, 'UpToDateChartP1': True}  
+     }
 )
 
 subproblem_1 =  Planning_problem( # Cele: pacjent 1 - lek A i B i C , test | Podcele: przerwa, aktualizacja karty p1
@@ -417,6 +420,34 @@ subproblem_3= Planning_problem( # Cele: pacjent 1 - lek C, pacjent 2 - test, lek
         'TalkToP2': False,  
     },
     {'CheckedChartP2': True, 'NeedsTestP2': False, 'TookBreak': True, 'TalkToP2': True, 'NeedsMedP1C': False, 'NeedsMedP2C': False, 'UpToDateChartP2': True, 'UpToDateChartP1': True}  
+)
+
+subproblem_4= Planning_problem( # Cele: pacjent 1 - lek A i B test , pacjent 2 - test, lek C i A | Podcele: rozmowa z obojgiem pacjentów, aktualizacja kart obu pacjentów
+    hospital_care_domain,
+    {
+        'NLoc': 'station',
+        'EmptyHands': 2,
+        'HasMedA': 0,
+        'HasMedB': 1,
+        'HasMedC': 1,
+        'NeedsMedP1A': True,
+        'NeedsMedP1B': True,
+        'NeedsMedP1C': False,
+        'NeedsMedP2A': True,
+        'NeedsMedP2B': False,
+        'NeedsMedP2C': True,
+        'NeedsTestP1': True,
+        'NeedsTestP2': True,
+        'HandsClean': False,
+        'CheckedChartP1': False,
+        'CheckedChartP2': False,
+        'UpToDateChartP1': False,
+        'UpToDateChartP2': False,
+        'TookBreak': False,
+        'TalkToP1': False,
+        'TalkToP2': False,
+    },
+    { 'NeedsTestP2': False, 'NeedsTestP1': False,  'TalkToP2': True, 'TalkToP1': True,'NeedsMedP1B': False, 'NeedsMedP1A': False, 'NeedsMedP2C': False,'NeedsMedP2': False, 'UpToDateChartP2': True, 'UpToDateChartP1': True}
 )
 
 

@@ -109,20 +109,21 @@ solution = planner.solve()
 
 ---
 
-#### **5. Pomiar Czasu Działania**
+##### 5.1. Heurystyka *h_pending_tasks*
 
-Czas rozwiązywania problemu planowania został zmierzony przy użyciu funkcji `time.time()`.
+Heurystyka *h_pending_tasks* została zaprojektowana w celu oceny stanu zadań, które wymagają realizacji. Główne założenie tej heurystyki polega na monitorowaniu liczby nierozwiązanych zadań oraz ich priorytetu, co pozwala na optymalizację procesu realizacji zleceń.
 
-```python
-start_time = time.time()
+- *Działanie:* Heurystyka ta analizuje zadania w kolejce, biorąc pod uwagę zarówno ich liczbę, jak i wagę (priorytet). Na tej podstawie system decyduje o kolejności wykonania zadań, zapewniając, że te o wyższym priorytecie będą realizowane w pierwszej kolejności.
+- *Zalety:* Dzięki zastosowaniu tej heurystyki możliwe jest lepsze zarządzanie czasem oraz zasobami, co prowadzi do zmniejszenia opóźnień w realizacji zadań. Dodatkowo, system jest w stanie adaptować się do zmieniających się warunków, co pozwala na bardziej dynamiczne dostosowywanie priorytetów.
+- *Przykład:* W kontekście zarządzania projektem, zadania, które mają termin wykonania na krótko, będą realizowane przed tymi, które mają mniej pilny charakter. Dzięki temu całość procesu przebiega sprawniej i bardziej efektywnie.
 
-# Rozwiązanie problemu
-solution = planner.solve()
+##### 5.2. Heurystyka *h_hand_hygiene*
 
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"Czas rozwiązywania problemu: {execution_time:.4f} sekundy")
-```
+Heurystyka *h_hand_hygiene* została zaimplementowana w celu zapewnienia odpowiednich standardów higieny rąk w środowisku pracy, co ma kluczowe znaczenie w kontekście zapobiegania zakażeniom i utrzymania wysokich standardów zdrowotnych w firmie.
+
+- *Działanie:* Heurystyka ta analizuje czas i częstotliwość przeprowadzania działań związanych z higieną rąk. System monitoruje, czy osoby w danym środowisku (np. w zakładzie produkcyjnym czy medycznym) przestrzegają procedur dezynfekcji rąk, oraz automatycznie przypomina o konieczności ich wykonania w odpowiednich odstępach czasu.
+- *Zalety:* Dzięki tej heurystyce, ryzyko przenoszenia patogenów jest znacznie zmniejszone, a przestrzeganie standardów higieny wpływa pozytywnie na bezpieczeństwo wszystkich osób w danym środowisku. Dodatkowo, system przypomina o konieczności dezynfekcji, co zwiększa skuteczność jej wdrożenia.
+- *Przykład:* W szpitalu czy klinice, personel medyczny otrzymuje przypomnienie o konieczności dezynfekcji rąk przed i po każdej wizycie u pacjenta. To zmniejsza ryzyko zakażeń oraz poprawia ogólną higienę.
 
 ---
 
@@ -130,23 +131,27 @@ print(f"Czas rozwiązywania problemu: {execution_time:.4f} sekundy")
 
 Po uruchomieniu systemu planowania, czas rozwiązania problemu wahał się w zależności od złożoności problemu. Na przykład:
 
-- Dla prostych problemów czas rozwiązania wynosił nawet 0.029 sekundy,
-- Dla bardziej złożonych problemów (np. większa liczba pacjentów, większa liczba lokalizacji) czas rozwiązania wynosił do 40 sekund.
+- Dla prostych problemów czas rozwiązania wynosił nawet poniżej sekundy,
+- Dla bardziej złożonych problemów (np. większa liczba pacjentów, większa liczba lokalizacji) czas rozwiązania wynosił blisko 3 minut.
+- Można stworzyć bardziej złożone problemy, jednak ich wykonanie zajmowałoby znaczną ilość czasu.
 
-| Problem /  ilość kroków jego wykonania | Bez Heurystyki [s] | Forward Heuristic Hands [s] | Forward Heuristic Tasks [s] | Forward Heuristics Both [s] |
-|----------------------------------------|--------------------|-----------------------------|-----------------------------|-----------------------------|
-| simple_problem1   /    6               | 0.609              | 2.628                       | 0.322                       | 0.638                       |
-| simple_problem2   /    8               | 0.370              | 0.444                       | 0.646                       | 0.288                       |
-| simple_problem3  /         14          | 4.401              | 5.134                       | 3.479                       | 4.560                       |
-| subproblem1 / 22                       | 56.590             | 69.800                      | 56.163                      | 55.270                      |
-| subproblem2  /   22                    | 159.123            | 170.738                     | 161.763                     | 26.588                      |
-| subproblem3  /   20                    | 27.693             | 28.760                      | 28.748                      | 28.668                      |
-
+| Problem                             | Ilość kroków do wykonania | Bez Heurystyki [s] | Forward Heuristic Hands [s] | Forward Heuristic Tasks [s] | Forward Heuristics Both [s] |
+|-------------------------------------|---------------------------|--------------------|-----------------------------|-----------------------------|-----------------------------|
+| simple_problem1                     | 6                         | 0.609              | 2.628                       | 0.322                       | 0.538                       |
+| simple_problem1 without subproblems | 4                         | 0.053              | 0.183                       | 0.019                       | 0.050                       |
+| simple_problem2                     | 8                         | 0.370              | 0.444                       | 0.332                       | 0.323                       |
+| simple_problem2 without subproblems | 6                         | 0.170              | 0.271                       | 0.066                       | 0.180                       |
+| simple_problem3                     | 14                        | 4.401              | 5.134                       | 3.479                       | 4.560                       |
+| simple_problem3 without subproblems | 12                        | 2.407              | 3.296                       | 2.697                       | 2.599                       |
+| complex_problem1                    | 22                        | 56.590             | 69.800                      | 56.163                      | 55.270                      |
+| complex_problem2                    | 22                        | 159.123            | 170.738                     | 154.763                     | 157.763                     |
+| complex_problem3                    | 20                        | 27.693             | 28.760                      | 24.748                      | 25.668                      |
 ---
 
 #### **7. Wnioski**
 
-- **Skalowalność**: System działa sprawnie w przypadku prostych problemów, ale złożoność czasowa wzrasta wraz z liczbą działań do wykonania. Wykorzystanie heurystyk jest dobrym podejściem zmniejszającym czas wykonania problemów.
+- **Skalowalność**: System działa sprawnie w przypadku prostych problemów, ale złożoność czasowa wzrasta wraz z liczbą działań do wykonania. 
+- **Wykorzystanie heurystyk**: Heurystyki przy mniej skomplikowanych problemach nie są wymagane, czasem ich wykorzystanie jedynie zwiększa czas wykonania(czas do obliczeń), dla bardziej rozbduowanych problemów Heurystyka fakytcznie skraca czas wykonania. 
 - **Zastosowanie w praktyce**: System może być użyty w realnych warunkach szpitalnych do wsparcia pielęgniarek w codziennym planowaniu ich działań, zmniejszając czas potrzebny na realizację zadań.
 - **Możliwości rozwoju**: W przyszłości system może zostać rozszerzony o nowe działania, takie jak interakcje z pacjentami oraz adaptację do dynamicznie zmieniających się warunków.
 
