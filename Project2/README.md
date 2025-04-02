@@ -135,12 +135,12 @@ Po uruchomieniu systemu planowania, czas rozwiązania problemu wahał się w zal
 
 | Problem /  ilość kroków jego wykonania | Bez Heurystyki [s] | Forward Heuristic Hands [s] | Forward Heuristic Tasks [s] | Forward Heuristics Both [s] |
 |----------------------------------------|--------------------|-----------------------------|-----------------------------|-----------------------------|
-| simple_problem1   /    6               | 0.609              | 2.628                       | 0.322                       | 0.015                       |
-| simple_problem2   /    8               | 0.370              | 0.444                       | 0.646                       | 10.804                      |
-| simple_problem3  /         14          | 4.401              | 5.134                       | 3.479                       | 33.811                      |
-| subproblem1 / 22                       | 56.590             | 69.800                      | 56.163                      | 40.560                      |
+| simple_problem1   /    6               | 0.609              | 2.628                       | 0.322                       | 0.638                       |
+| simple_problem2   /    8               | 0.370              | 0.444                       | 0.646                       | 0.288                       |
+| simple_problem3  /         14          | 4.401              | 5.134                       | 3.479                       | 4.560                       |
+| subproblem1 / 22                       | 56.590             | 69.800                      | 56.163                      | 55.270                      |
 | subproblem2  /   22                    | 159.123            | 170.738                     | 161.763                     | 26.588                      |
-| subproblem3  /   20                    | 27.693             | 28.760                      | 28.748                      | 4.540                       |
+| subproblem3  /   20                    | 27.693             | 28.760                      | 28.748                      | 28.668                      |
 
 ---
 
