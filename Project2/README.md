@@ -2,7 +2,10 @@
 
 ---
 
+**Pliki z zawartością kodu to stripsProblem.py oraz stripsHeuristic.py.**
+
 #### **1. Wstęp**
+
 
 W niniejszym projekcie zajmujemy się opracowaniem systemu planowania opieki pielęgniarskiej w szpitalu, przy użyciu technik sztucznej inteligencji (AI), w tym algorytmu planowania opisanego w logice STRIPS (Stan-Opis-Rzeczywistość). Celem systemu jest automatyczne generowanie sekwencji działań pielęgniarki w oparciu o dostępne zasoby, wymagania medyczne i czas.
 
