@@ -123,10 +123,10 @@ from stripsForwardPlanner import Forward_STRIPS
 import stripsProblem
 
 
-def test_forward_heuristic(thisproblem=stripsProblem.subproblem_1):
+def test_forward_heuristic(thisproblem=stripsProblem.simple_problem3):
     start_time = time.time()
-    # print("\n***** FORWARD NO HEURISTIC")
-    # print(SearcherMPP(Forward_STRIPS(thisproblem)).search())
+    print("\n***** FORWARD NO HEURISTIC")
+    print(SearcherMPP(Forward_STRIPS(thisproblem)).search())
 
     # print("\n***** FORWARD WITH HEURISTIC h_hand_hygiene")
     # print(SearcherMPP(Forward_STRIPS(thisproblem,h_hand_hygiene)).search())
@@ -134,8 +134,8 @@ def test_forward_heuristic(thisproblem=stripsProblem.subproblem_1):
     # print("\n***** FORWARD WITH HEURISTIC h_pending_tasks")
     # print(SearcherMPP(Forward_STRIPS(thisproblem,h_pending_tasks)).search())
 
-    print("\n***** FORWARD WITH HEURISTICs h1 and h2")
-    print(SearcherMPP(Forward_STRIPS(thisproblem,maxh(h_pending_tasks,h_hand_hygiene))).search())
+    # print("\n***** FORWARD WITH HEURISTICs h1 and h2")
+    # print(SearcherMPP(Forward_STRIPS(thisproblem,maxh(h_pending_tasks,h_hand_hygiene))).search())
     end_time = time.time()
     print(end_time - start_time)
 if __name__ == "__main__":
