@@ -10,7 +10,7 @@ disc = 0.9 #współczynnik dyskontowy
 learning_rate = 0.1 #wspołczynik uczenia
 epsilon = 0.1 #wspolczynnik eksploracji
 
-episodes = 200
+episodes = 1000
 max_steps = 100 
 
 act_space  = env.action_space

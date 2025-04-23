@@ -1,5 +1,5 @@
 ### GRA CLIFFWALKING
-
+do tego będzie druga wersja uczenia ze wzmocnieniem do 8 pkt- rózne paramtry porównac zeby było cos do sprawka dla 1000 epoch , mozna sieci neuronowe whatever we want i guess
 #### **1.Wstęp**
 CliffWalking to gra opierająca się na przejściu agenta z przez planszę 4x12 rozpoczynając na
 polu startowym do osiągnięcia wyznaczonego celu, unikając przy tym wpadnięcia do klifu.
@@ -36,5 +36,6 @@ Gra zostaje zakończona w momencie osiągnięcie gracza dolecowej pozycji na pla
 
 
 ### PROBLEM MOUNTAIN CAR CONTINOUS
+imo jak bardzo będzie nam sie chiało to do tego tez mozna jakas druga metode uczenia ze wzmocnieniem zrobic idk really zależy dla którego problemu będzi łatwiej
 
 #### **1.Wstęp**
