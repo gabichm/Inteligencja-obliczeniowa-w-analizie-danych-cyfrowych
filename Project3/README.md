@@ -1,4 +1,4 @@
-### GRA CLIFFWALKING
+# GRA CLIFFWALKING
 
 ### **1.Wstęp**
 
@@ -138,74 +138,214 @@ Na podstawie przeprowadzonych eksperymentów można wyciągnąć kilka istotnych
 - wyższe alfa (learning rate) pozwala na szybszą naukę, ale powoduje niestabilność wyników,
 - zmniejsze nie gammy (wspołczynnik dyskontowy) wpływa negatywnie na długoterminowe decyzje obniżając jakość wyników.
 
-### **GRA MOUNTAIN CAR CONTINUOUS**
+# **GRA MOUNTAIN CAR CONTINUOUS**
 
-### **1. Wstęp**
+## **1. Wstęp**
 
-MountainCarContinuous to gra opierająca się na kontrolowaniu pojazdu, który ma na celu dotarcie na szczyt wzniesienia, wykorzystując swoją prędkość do wspinania się na górę. Gra jest dynamiczna, a celem agenta jest osiągnięcie jak najwyższej prędkości i przekroczenie wyznaczonego celu. Gra odbywa się w przestrzeni 1D, gdzie agent musi sterować siłą przyspieszenia, aby zdobyć wystarczającą prędkość i wspiąć się na górę.
+MountainCarContinuous to gra opierająca się na kontrolowaniu pojazdu, który ma na celu dotarcie na szczyt wzniesienia, wykorzystując swoją prędkość do wspinania się na górę. Gra odbywa się w przestrzeni jednowymiarowej, gdzie agent musi sterować siłą przyspieszenia, aby zdobyć wystarczający pęd i wspiąć się na górę.
 
-**Przestrzeń rozgrywki**
+### **Przestrzeń rozgrywki**
 
-- **Początkowa pozycja agenta**: Pojazd znajduje się na dole wzniesienia w pozycji \[0, 0], z małą początkową prędkością.
-- **Docelowa pozycja agenta**: Celem jest dotarcie do góry wzniesienia, która znajduje się w punkcie o współrzędnych \[0, 1].
-- **Obszar gry**: Gra odbywa się w przestrzeni 1D, gdzie agent ma możliwość wybrania jednego z trzech działań: przyspieszenia w prawo, przyspieszenia w lewo lub pozostania w miejscu. W przestrzeni gry nie ma żadnych klifów ani specjalnych przeszkód.
+- **Początkowa pozycja agenta**: Pojazd znajduje się na dole wzniesienia, zazwyczaj w okolicy `x ≈ -0.5`, z małą początkową prędkością.
+- **Docelowa pozycja agenta**: Celem jest dotarcie do pozycji `x >= 0.45`, która symbolizuje szczyt wzniesienia.
+- **Obszar gry**: Gra odbywa się w przestrzeni 1D, a agent wykonuje ciągłe akcje, sterując siłą przyspieszenia.
 
-**Sterowanie i akcja**
+### **Sterowanie i akcja**
 
-Gracz ma wybór między ciągłą akcją:
+- **Akcja**: Siła przyspieszenia mieści się w zakresie od `-1.0` (maksymalne przyspieszenie w lewo) do `+1.0` (maksymalne przyspieszenie w prawo).
 
-- **Akcja**: Siła przyspieszenia: od -1 (maksymalne hamowanie w lewo) do +1 (maksymalne przyspieszenie w prawo).
+### **Nagrody**
 
-**Nagrody**
+- **Za każdy krok**: kara w postaci `-a²`, gdzie `a` to wartość przyspieszenia. Oznacza to, że agent jest karany za użycie dużej siły, co motywuje go do ekonomicznego poruszania się.
+- **Osiągnięcie celu**: nagroda +100, przyznawana natychmiast po osiągnięciu pozycji `x >= 0.45`.
 
-- **Każdy krok agenta**: Nagroda -1 (agent jest nagradzany za każdy wykonany krok, co ma na celu motywowanie go do jak najszybszego osiągnięcia celu).
-- **Osiągnięcie celu**: Nagroda 100 (jeśli agent dotrze na szczyt wzniesienia).
+### **Koniec gry**
 
-**Koniec gry**
+Gra kończy się, gdy:
 
-Gra kończy się, gdy agent osiągnie wyznaczony cel, czyli przekroczy określoną pozycję na osi X (np. wartość 0.5).
+- Agent osiągnie cel (`x >= 0.45`), lub
+- Zostanie osiągnięty maksymalny czas trwania epizodu (999 kroków).
 
-### **2. Uczenie ze wzmocnieniem**
+---
 
-## **PPO (Proximal Policy Optimization)**
+## **2. Uczenie ze wzmocnieniem**
 
-**Na czym polega?**
+### **PPO (Proximal Policy Optimization)**
 
-PPO to metoda oparta na optymalizacji polityki, która dąży do maksymalizacji oczekiwanej nagrody w długim okresie. PPO jest bardziej stabilnym i prostym algorytmem niż inne metody opierające się na optymalizacji polityki, takie jak TRPO (Trust Region Policy Optimization). Wykorzystuje on mechanizm "klipu" dla aktualizacji polityki, co pozwala na kontrolowanie zmian w polityce w trakcie uczenia i zapobiega zbyt dużym skokom w wartościach.
+PPO to nowoczesna metoda uczenia ze wzmocnieniem oparta na optymalizacji polityki. Algorytm ten maksymalizuje oczekiwaną sumę nagród poprzez bezpieczne i stabilne aktualizacje polityki.
 
-PPO jest algorytmem on-policy, co oznacza, że aktualizuje politykę w oparciu o próbki z tej samej polityki, którą aktualnie trenuje. Używa dużych partii danych, aby zapewnić stabilność podczas treningu.
+- PPO stosuje mechanizm „klipowania” zmian w polityce, co zapobiega dużym skokom wartości i zwiększa stabilność uczenia.
+- Jest to algorytm **on-policy**, co oznacza, że aktualizacje są dokonywane na podstawie danych wygenerowanych przez bieżącą politykę.
+- Jest prostszy i bardziej niezawodny w porównaniu do starszych metod, takich jak TRPO.
 
-**Implementacja**
+### **Implementacja**
 
-W tym przypadku wykorzystano algorytm PPO w połączeniu z bibliotekami `gymnasium` i `stable_baselines3`. Celem jest nauka agenta w środowisku **MountainCarContinuous-v0**, w którym agent stara się osiągnąć wyznaczony cel, kontrolując siłę przyspieszenia pojazdu.
+Do implementacji wykorzystano biblioteki:
 
-### **3. Wyniki**
+- `gymnasium` do stworzenia środowiska gry,
+- `stable_baselines3` do treningu modelu PPO,
+- `VecNormalize` do normalizacji obserwacji.
 
-**Porównanie wyników**
+Agent został wytrenowany w środowisku **MountainCarContinuous-v0**, ucząc się kontrolować siłę przyspieszenia tak, aby osiągać cel jak najszybciej i jak najbardziej efektywnie.
 
-Po zakończeniu treningu agenta PPO, możemy obserwować wyniki w postaci nagród z każdego epizodu oraz liczby kroków wykonanych przez agenta. PPO powinno wykazywać szybki wzrost nagród w miarę, jak agent uczy się coraz lepszych strategii osiągania celu.
+---
 
-**Porównanie nagród w czasie**
+## **3. Wyniki**
 
-![Porównanie nagród PPO](ppo_rewards_comparison.png)
+Po zakończeniu treningu agenta w środowisku `MountainCarContinuous-v0`, przeanalizowano wyniki pod kątem:
 
-### **4. Wnioski**
+- Otrzymywanych nagród w każdym epizodzie
+- Liczby kroków potrzebnych do osiągnięcia celu
+- Maksymalnej osiągniętej pozycji
 
-Na podstawie przeprowadzonego eksperymentu, można zauważyć kilka kluczowych spostrzeżeń:
+### **Porównanie nagród w zależności od współczynnika dyskontowego γ**
 
-1. **Skuteczność PPO:**
+Współczynnik dyskontowy (gamma, γ) określa, jak bardzo agent "dba" o przyszłe nagrody. Poniżej przedstawiono wpływ różnych wartości γ na wyniki:
 
-   - PPO jest bardzo stabilnym algorytmem, który skutecznie uczy agenta jak poruszać się w środowisku `MountainCarContinuous-v0`.
-   - Model PPO wykazuje dobrą równowagę między eksploracją a eksploatacją, co pozwala na szybkie nauczenie się optymalnej polityki.
+---
 
-2. **Szybkość osiągania celów:**
+### **γ = 0.9765**
 
-   - Po około 1000 epizodach, agent PPO zaczyna wykazywać coraz wyższe nagrody, osiągając optymalne strategie przy minimalnych ryzykach (brak wpadania do klifu).
+| Epizod | Nagroda   | Maksymalna Pozycja | Kroki do Celu |
+| ------ | --------- | ------------------ | ------------- |
+| 0.0    | -0.036738 | -0.191889          | -1.0          |
+| 1.0    | -0.040459 | -0.042791          | -1.0          |
+| 2.0    | -0.041366 | -0.042791          | -1.0          |
+| 3.0    | -0.100000 | -0.042791          | -1.0          |
+| 4.0    | -0.050054 | 0.602631           | 898.0         |
+| 5.0    | -0.064874 | 0.602631           | 1897.0        |
+| 6.0    | -0.005479 | 0.602631           | 848.0         |
+| 7.0    | 99.999320 | 0.602631           | 1662.0        |
+| 8.0    | -0.078859 | 0.602631           | 613.0         |
+| 9.0    | -0.051665 | 0.602631           | 1612.0        |
+| 10.0   | -0.045746 | 0.602631           | 563.0         |
+| 11.0   | -0.004067 | 0.602631           | 1562.0        |
+| 12.0   | -0.068066 | 0.602631           | 513.0         |
+| 13.0   | -0.001290 | 0.602631           | 1512.0        |
+| 14.0   | -0.025643 | 0.602631           | 463.0         |
+| 15.0   | -0.051897 | 0.602631           | 1462.0        |
+| 16.0   | -0.100000 | 0.602631           | 413.0         |
+| 17.0   | -0.009664 | 0.602631           | 1412.0        |
+| 18.0   | -0.100000 | 0.602631           | 363.0         |
+| 19.0   | 99.967766 | 0.602631           | 1329.0        |
+| 20.0   | -0.000550 | 0.602631           | 280.0         |
+| 21.0   | -0.087202 | 0.602631           | 1279.0        |
+| 22.0   | -0.080753 | 0.602631           | 230.0         |
+| 23.0   | 99.970410 | 0.602631           | 1069.0        |
+| 24.0   | 99.964070 | 0.602631           | 1736.0        |
+| 25.0   | 99.969340 | 0.602631           | 254.0         |
+| 26.0   | 99.998480 | 0.602631           | 986.0         |
+| 27.0   | 99.977480 | 0.602631           | 1505.0        |
+| 28.0   | 99.900000 | 0.602631           | 228.0         |
+| 29.0   | 99.958570 | 0.602631           | 668.0         |
 
-3. **Porównanie z innymi algorytmami:**
+![](reward_per_episode_09765.png)
 
-   - PPO, dzięki swojej stabilności i elastyczności, może być bardziej efektywnym wyborem w porównaniu do prostszych algorytmów, jak Q-learning czy SARSA, szczególnie w bardziej złożonych środowiskach takich jak `MountainCarContinuous-v0`.
+- Agent potrzebował około 10 epizodów, aby zacząć konsekwentnie osiągać maksymalną nagrodę (100).
+- Widoczne są dwa skoki nagród — początkowe próby, a następnie szybka poprawa strategii.
+- Stabilność po wczesnym okresie eksploracji.
 
-4. **Znaczenie hiperparametrów:**
+---
 
-   - Ustawienia takie jak współczynnik dyskontowy γ, rozmiar kroków (n_steps), oraz współczynnik uczenia się (learning_rate) mają istotny wpływ na efektywność algorytmu, dlatego warto eksperymentować z ich wartościami, aby uzyskać jak najlepsze rezultaty.
+### **γ = 0.98**
+
+![Gamma 0.98](reward_per_episode_098.png)
+
+| Epizod | Nagroda   | Maksymalna Pozycja | Kroki do Celu |
+| ------ | --------- | ------------------ | ------------- |
+| 0.0    | -0.100000 | 0.647474           | 998.0         |
+| 1.0    | -0.070406 | 0.647474           | 1997.0        |
+| 2.0    | -0.100000 | 0.647474           | 948.0         |
+| 3.0    | -0.017939 | 0.647474           | 1947.0        |
+| 4.0    | -0.058896 | 0.647474           | 898.0         |
+| 5.0    | -0.100000 | 0.647474           | 1897.0        |
+| 6.0    | -0.005507 | 0.647474           | 848.0         |
+| 7.0    | -0.001742 | 0.647474           | 1847.0        |
+| 8.0    | -0.100000 | 0.647474           | 798.0         |
+| 9.0    | 99.951195 | 0.647474           | 1403.0        |
+| 10.0   | -0.076981 | 0.647474           | 354.0         |
+| 11.0   | -0.006907 | 0.647474           | 1353.0        |
+| 12.0   | 99.970280 | 0.647474           | 136.0         |
+| 13.0   | 99.910774 | 0.647474           | 828.0         |
+| 14.0   | -0.007713 | 0.647474           | 1827.0        |
+| 15.0   | 99.900000 | 0.647474           | 317.0         |
+| 16.0   | 99.982880 | 0.647474           | 1031.0        |
+| 17.0   | 99.998820 | 0.647474           | 1950.0        |
+| 18.0   | 99.993970 | 0.647474           | 317.0         |
+| 19.0   | 99.922325 | 0.647474           | 804.0         |
+| 20.0   | -0.018088 | 0.647474           | 1803.0        |
+| 21.0   | 99.992240 | 0.647474           | 80.0          |
+| 22.0   | 99.967310 | 0.647474           | 495.0         |
+| 23.0   | 99.965650 | 0.647474           | 826.0         |
+| 24.0   | 99.947914 | 0.647474           | 1132.0        |
+
+- Również bardzo szybka konwergencja, choć możliwe są nieco większe wahania na początku.
+- Bardzo szybka konwergencja i minimalna liczba epizodów z niską nagrodą.
+
+---
+
+### **γ = 0.987**
+
+![Gamma 0.987](reward_per_episode_0987.png)
+**Wyniki**
+| Epizod | Nagroda | Maksymalna Pozycja | Kroki do Celu |
+|--------|---------|---------------------|----------------|
+| 0.0 | -0.100000 | 0.986133 | 998.0 |
+| 1.0 | -0.000139 | 0.986133 | 1997.0 |
+| 2.0 | -0.005772 | 0.986133 | 948.0 |
+| 3.0 | -0.046811 | 0.986133 | 1947.0 |
+| 4.0 | -0.001381 | 0.986133 | 898.0 |
+| 5.0 | -0.011804 | 0.986133 | 1897.0 |
+| 6.0 | -0.003015 | 0.986133 | 848.0 |
+| 7.0 | -0.100000 | 0.986133 | 1847.0 |
+| 8.0 | -0.055769 | 0.986133 | 798.0 |
+| 9.0 | -0.015827 | 0.986133 | 1797.0 |
+| 10.0 | -0.001606 | 0.986133 | 748.0 |
+| 11.0 | 99.900000 | 0.986133 | 1676.0 |
+| 12.0 | 99.900000 | 0.986133 | 592.0 |
+| 13.0 | -0.001159 | 0.986133 | 1591.0 |
+| 14.0 | 99.967510 | 0.986133 | 130.0 |
+| 15.0 | 99.999350 | 0.986133 | 620.0 |
+| 16.0 | 99.991680 | 0.986133 | 1031.0 |
+| 17.0 | 99.988490 | 0.986133 | 1477.0 |
+| 18.0 | 99.968470 | 0.986133 | 1950.0 |
+| 19.0 | 99.933960 | 0.986133 | 538.0 |
+
+- Agent bardzo szybko nauczył się optymalnej strategii.
+- Już po kilku epizodach nagrody osiągają wartość 100 i utrzymują się na tym poziomie.
+- Stabilne osiąganie wysokich nagród po kilku epizodach.
+
+---
+
+### **Wnioski z porównania gamma**
+
+- Im wyższa wartość γ, tym większa waga przypisywana przyszłym nagrodom, co może sprzyjać lepszemu planowaniu.
+- Wartości gamma w zakresie 0.98–0.987 zapewniają bardzo dobre rezultaty i szybką konwergencję.
+- Niska gamma może prowadzić do krótkowzroczności agenta, ale też może ograniczać nadmierne eksplorowanie.
+
+---
+
+## **4. Wnioski**
+
+### **1. Skuteczność PPO**
+
+- PPO okazał się stabilnym i efektywnym algorytmem w środowisku `MountainCarContinuous-v0`.
+- Agent nauczył się szybko osiągać cel poprzez optymalną strategię poruszania się i wykorzystywania pędu.
+
+### **2. Szybkość osiągania celów**
+
+- Po około 2-5 epizodach agent zaczął regularnie osiągać cel, maksymalizując nagrody.
+
+### **3. Znaczenie hiperparametrów**
+
+- Parametry takie jak współczynnik dyskontowy γ, liczba kroków (n_steps) czy współczynnik uczenia (learning_rate) mają kluczowy wpływ na skuteczność algorytmu.
+- W eksperymentach zauważono, że:
+  - **gamma = 0.90** – agent nie był w stanie nauczyć się osiągać celu; prawdopodobnie zbyt krótkowzroczna strategia;
+  - **gamma = 0.98** – dobry kompromis między szybkim uczeniem a planowaniem;
+  - **gamma = 0.99** – zbyt duże znaczenie przyszłych nagród skutkowało brakiem postępu; agent nie potrafił wyjść poza bardzo niskie nagrody.
+
+---
+
+## **5. Zakończenie**
+
+Model PPO z powodzeniem nauczył się sterować agentem w środowisku MountainCarContinuous, osiągając wysoką skuteczność w zdobywaniu nagrody i szybkim dotarciu do celu. Wybór odpowiednich hiperparametrów i stabilny algorytm były kluczowe dla sukcesu.
