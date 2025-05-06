@@ -1,233 +1,148 @@
 import gymnasium as gym
+from stable_baselines3 import PPO
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import VecNormalize
+from stable_baselines3.common.callbacks import BaseCallback
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from collections import deque
-import random
+import time
 import matplotlib.pyplot as plt
+import csv
 
-# Ustawienia
-ENV_NAME = "MountainCarContinuous-v0"
-SEED = 123
-MAX_EPISODES = 300
-MAX_STEPS = 999
-BATCH_SIZE = 64
-GAMMA = 0.99
-TAU = 0.005
-ACTOR_LR = 1e-4
-CRITIC_LR = 1e-3
-MEMORY_CAPACITY = 1000000
 
-# Reproducibility
-torch.manual_seed(SEED)
-np.random.seed(SEED)
-random.seed(SEED)
+class EpisodeLogger(BaseCallback):
+    def __init__(self, max_episodes, verbose=0):
+        super().__init__(verbose)
+        self.max_episodes = max_episodes  # Liczba epizodów, po której zakończymy trening
+        self.episode_rewards = []
+        self.episode_max_positions = []
+        self.episode_steps_to_goal = []
+        self.episode_count = 0  # Licznik epizodów
 
-# Actor network
-class Actor(nn.Module):
-    def __init__(self, state_dim, action_dim, max_action):
-        super().__init__()
-        self.fc = nn.Sequential(
-            nn.Linear(state_dim, 400),
-            nn.ReLU(),
-            nn.Linear(400, 300),
-            nn.ReLU(),
-            nn.Linear(300, action_dim),
-            nn.Tanh()
-        )
-        self.max_action = max_action
+    def _on_step(self) -> bool:
+        infos = self.locals["infos"]
+        dones = self.locals["dones"]
+        obs = self.locals["new_obs"]
 
-    def forward(self, state):
-        return self.max_action * self.fc(state)
+        for i, done in enumerate(dones):
+            if done:
+                # Zliczanie epizodow
+                self.episode_count += 1
 
-# Critic network
-class Critic(nn.Module):
-    def __init__(self, state_dim, action_dim):
-        super().__init__()
-        self.fc = nn.Sequential(
-            nn.Linear(state_dim + action_dim, 400),
-            nn.ReLU(),
-            nn.Linear(400, 300),
-            nn.ReLU(),
-            nn.Linear(300, 1)
-        )
+                # reward z epizodu
+                reward = self.locals["rewards"][i]
+                self.episode_rewards.append(reward)
 
-    def forward(self, state, action):
-        x = torch.cat([state, action], 1)
-        return self.fc(x)
+                # pozycja samochodu 
+                max_pos = max(float(obs[i][0]), self.episode_max_positions[-1] if self.episode_max_positions else -np.inf)
 
-# Replay buffer
-class ReplayBuffer:
-    def __init__(self, capacity):
-        self.buffer = deque(maxlen=capacity)
+                self.episode_max_positions.append(max_pos)
 
-    def add(self, transition):
-        self.buffer.append(transition)
+               
+                if max_pos >= 0.45:
+                    steps_to_goal = self.locals["n_steps"]
+                    self.episode_steps_to_goal.append(steps_to_goal)
+                else:
+                    self.episode_steps_to_goal.append(-1)
 
-    def sample(self, batch_size):
-        batch = random.sample(self.buffer, batch_size)
-        states, actions, rewards, next_states, dones = map(np.array, zip(*batch))
-        return (
-            torch.FloatTensor(states),
-            torch.FloatTensor(actions),
-            torch.FloatTensor(rewards).unsqueeze(1),
-            torch.FloatTensor(next_states),
-            torch.FloatTensor(dones).unsqueeze(1)
-        )
+                print(f"🏁 Epizod zakończony | Reward: {reward:.2f} | Max pozycja: {max_pos:.4f}")
 
-    def __len__(self):
-        return len(self.buffer)
+        # Zatrzymanie treningu po osiągnięciu max_episodes
+        if self.episode_count >= self.max_episodes:
+            print(f"🏁 Zakończono trening po {self.max_episodes} epizodach!")
+            return False  # Zakończ trening
 
-# Agent DDPG
-class DDPGAgent:
-    def __init__(self, state_dim, action_dim, max_action):
-        self.actor = Actor(state_dim, action_dim, max_action)
-        self.actor_target = Actor(state_dim, action_dim, max_action)
-        self.actor_target.load_state_dict(self.actor.state_dict())
+        return True
 
-        self.critic = Critic(state_dim, action_dim)
-        self.critic_target = Critic(state_dim, action_dim)
-        self.critic_target.load_state_dict(self.critic.state_dict())
 
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=ACTOR_LR)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=CRITIC_LR)
+env = make_vec_env("MountainCarContinuous-v0", n_envs=1)
+env = VecNormalize(env, norm_obs=True, norm_reward=False)
 
-        self.replay_buffer = ReplayBuffer(MEMORY_CAPACITY)
-        self.max_action = max_action
+# Hiperparametry PPO
+model = PPO(
+    "MlpPolicy",
+    env,
+    verbose=1,
+    learning_rate=3e-4,
+    gamma=0.98, 
+    gae_lambda=0.95,
+    n_steps=2048,
+    batch_size=64,
+    ent_coef=0.1,  
+    n_epochs=10,
+    clip_range=0.2,
+    tensorboard_log="./ppo_log"
+)
 
-    def select_action(self, state, noise=0.1):
-        state = torch.FloatTensor(state.reshape(1, -1))
-        action = self.actor(state).detach().cpu().numpy()[0]
-        return (action + noise * np.random.randn(*action.shape)).clip(-self.max_action, self.max_action)
-
-    def train(self):
-        if len(self.replay_buffer) < BATCH_SIZE:
-            return
-
-        state, action, reward, next_state, done = self.replay_buffer.sample(BATCH_SIZE)
-
-        # Critic loss
-        with torch.no_grad():
-            target_action = self.actor_target(next_state)
-            target_q = self.critic_target(next_state, target_action)
-            y = reward + GAMMA * (1 - done) * target_q
-
-        critic_loss = nn.MSELoss()(self.critic(state, action), y)
-
-        self.critic_optimizer.zero_grad()
-        critic_loss.backward()
-        self.critic_optimizer.step()
-
-        # Actor loss
-        actor_loss = -self.critic(state, self.actor(state)).mean()
-
-        self.actor_optimizer.zero_grad()
-        actor_loss.backward()
-        self.actor_optimizer.step()
-
-        # Soft update
-        for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
-            target_param.data.copy_(TAU * param.data + (1 - TAU) * target_param.data)
-        for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
-            target_param.data.copy_(TAU * param.data + (1 - TAU) * target_param.data)
+# Liczba epizodów maksymalna
+max_episodes = 1000  
 
 # Trening
-env = gym.make(ENV_NAME)
-env.reset(seed=SEED)
-state_dim = env.observation_space.shape[0]
-action_dim = env.action_space.shape[0]
-max_action = float(env.action_space.high[0])
-agent = DDPGAgent(state_dim, action_dim, max_action)
-
-episode_rewards = []
-
-for episode in range(MAX_EPISODES):
-    state, _ = env.reset()
-    episode_reward = 0
-
-    for step in range(MAX_STEPS):
-        action = agent.select_action(state)
-        next_state, reward, terminated, truncated, _ = env.step(action)
-        done = terminated or truncated
-        agent.replay_buffer.add((state, action, reward, next_state, float(done)))
-        state = next_state
-        episode_reward += reward
-
-        agent.train()
-
-        if done:
-            break
-
-    episode_rewards.append(episode_reward)
-    print(f"Episode {episode + 1}: reward = {episode_reward:.2f}")
-
-# Wykres
-plt.plot(episode_rewards)
-plt.xlabel("Episode")
-plt.ylabel("Reward")
-plt.title("DDPG on MountainCarContinuous-v0")
-plt.show()
+start = time.time()
+callback = EpisodeLogger(max_episodes=max_episodes)  # Dodajemy licznik epizodów
+model.learn(total_timesteps=1_000_000, callback=callback)
+end = time.time()
+print(f"⏱ Trening trwał {(end - start):.2f} sekundy")
 
 
+model.save("ppo_mountaincar")
+env.save("vec_normalize.pkl")
+print("📦 Model i normalizacja zapisane")
 
-# import gymnasium as gym
-# from stable_baselines3 import PPO
-# from stable_baselines3.common.env_util import make_vec_env
-# from stable_baselines3.common.vec_env import VecNormalize
-# import numpy as np
-# import time
 
-# # Utwórz środowisko treningowe z normalizacją obserwacji
-# env = make_vec_env(lambda: gym.make("MountainCarContinuous-v0", goal_velocity=0.1), n_envs=1)
-# env = VecNormalize(env, norm_obs=True, norm_reward=False)
+# normalizacja  w testowym środowisku
+test_env = gym.make("MountainCarContinuous-v0", render_mode="human")
+test_env = make_vec_env(lambda: test_env, n_envs=1)
+test_env = VecNormalize.load("vec_normalize.pkl", test_env)
+test_env.training = False  
+obs = test_env.reset()
+done = False
+episode_reward = 0
+max_position = float(obs[0][0])  
 
-# # ⚙️ Lepsze hiperparametry dla MountainCarContinuous
-# model = PPO(
-#     "MlpPolicy",
-#     env,
-#     verbose=1,
-#     learning_rate=3e-4,
-#     gamma=0.98,
-#     gae_lambda=0.9,
-#     n_steps=2048,
-#     batch_size=64,
-#     ent_coef=0.0,
-#     n_epochs=10,
-#     clip_range=0.2,
-#     tensorboard_log="./ppo_log"
-# )
+while not done:
+    action, _ = model.predict(obs, deterministic=True)
+    obs, reward, terminated, truncated = test_env.step(action)
+    done = terminated or truncated
+    episode_reward += float(reward)
+    max_position = max(max_position, float(obs[0][0]))
 
-# # ⏱ Trening + pomiar FPS
-# start_time = time.time()
-# model.learn(total_timesteps=1_000_000)
-# end_time = time.time()
-# print(f"⏱ Trening trwał {(end_time - start_time):.2f} sekundy")
+    test_env.render()
 
-# # 💾 Zapisz model + normalizację
-# model.save("ppo_mountaincar")
-# env.save("vec_normalize.pkl")
-# print("📦 Model i normalizacja zapisane")
+episode_reward = float(episode_reward)  
+print(f"🎯 Reward z testu: {episode_reward:.2f}")
+print(f"🚗 Największa osiągnięta pozycja: {max_position:.4f}")
 
-# # 🧪 Testowanie z tą samą normalizacją
-# test_env = gym.make("MountainCarContinuous-v0", render_mode="human", goal_velocity=0.1)
-# test_env = VecNormalize.load("vec_normalize.pkl", test_env)
-# test_env.training = False  # wyłącz aktualizację statystyk normalizacji
 
-# obs, _ = test_env.reset()
-# done = False
-# episode_reward = 0
+episodes = np.arange(len(callback.episode_rewards))
 
-# while not done:
-#     action, _ = model.predict(obs, deterministic=True)
-#     obs, reward, terminated, truncated, _ = test_env.step(action)
-#     done = terminated or truncated
-#     episode_reward += reward
-#     test_env.render()
 
-# test_env.close()
+# Wykres 1: Nagroda
+plt.figure(figsize=(6, 4))
+plt.plot(episodes, callback.episode_rewards, label="Nagroda")
+plt.xlabel("Epizod")
+plt.ylabel("Nagroda")
+plt.title("Nagroda w każdym epizodzie")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('reward_per_episode.png')
+plt.close()  
 
-# # 📊 Zapisz wynik
-# with open("ppo_rewards.txt", "w") as f:
-#     f.write(f"{episode_reward}\n")
-# print(f"📈 Nagroda z testu: {episode_reward:.2f}")
+# Wykres 2: Maksymalna pozycja
+plt.figure(figsize=(6, 4))
+plt.plot(episodes, callback.episode_max_positions, label="Max Pozycja", color="orange")
+plt.xlabel("Epizod")
+plt.ylabel("Maksymalna pozycja")
+plt.title("Maksymalna pozycja w każdym epizodzie")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('max_position_per_episode.png')
+plt.close()
+
+test_env.close()
+
+# Zapis wyników do pliku CSV
+# with open('episode_results.csv', 'w', newline='') as file:
+#     writer = csv.writer(file)
+#     writer.writerow(["Epizod", "Nagroda", "Maksymalna Pozycja", "Kroki do Celu"])
+#     for i in range(len(callback.episode_rewards)):
+#         writer.writerow([i, callback.episode_rewards[i], callback.episode_max_positions[i], callback.episode_steps_to_goal[i]])
