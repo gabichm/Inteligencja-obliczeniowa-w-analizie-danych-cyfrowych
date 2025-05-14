@@ -1,12 +1,15 @@
+import pygame
+import os
+import sys
+import random
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from typing import List, Tuple, Optional, Dict
 
-
 class CollectEnv(gym.Env):
 
-    metadata = {"render_modes": ["ansi"]}
+    metadata = {"render_modes": ["human", "ansi"]}
 
     ACTIONS = ["up", "down", "left", "right", "none"]
     ACTION_MAP = {
@@ -20,15 +23,24 @@ class CollectEnv(gym.Env):
     def __init__(self, render_mode: Optional[str] = None):
         super().__init__()
         self.grid_size = (20, 20)
+        self.cell_size = 20
+        self.window_size = (self.grid_size[0] * self.cell_size, self.grid_size[1] * self.cell_size)
         self.max_steps = 135
         self.start_pos = (10, 10)
         self.render_mode = render_mode
+
 
         self.action_space = spaces.Discrete(5)
         self.observation_space = spaces.Dict({
             "position": spaces.Box(low=0, high=19, shape=(2,), dtype=np.int32),
             "step": spaces.Discrete(self.max_steps + 1),
         })
+        self.assets = {}
+        if render_mode == "human":
+            pygame.init()
+            self.window = pygame.display.set_mode(self.window_size)
+            self.clock = pygame.time.Clock()
+            self.load_assets()
 
         self.spawn_schedule: List[Tuple[int, str, Tuple[int, int]]] = [
             (0, "fruit", (2, 17)), (4, "candy", (3, 14)), (7, "fruit", (6, 6)),
@@ -42,6 +54,8 @@ class CollectEnv(gym.Env):
             (94, "fruit", (8, 8)), (98, "fruit", (5, 13)), (99, "candy", (7, 14)),
             (105, "fruit", (10, 16)), (111, "candy", (8, 19)), (115, "fruit", (7, 19)),
         ]
+        self.window = None
+        self.clock = None
 
         self.reset()
 
@@ -93,16 +107,63 @@ class CollectEnv(gym.Env):
             "position": np.array(self.agent_pos, dtype=np.int32),
             "step": self.current_step
         }
+    
+    def load_assets(self):
+        self.assets["agent"] = pygame.image.load(os.path.join("pictures", "girl.png"))
+        self.assets["fruit"] = pygame.image.load(os.path.join("pictures", "apple.png"))
+        self.assets["candy"] = pygame.image.load(os.path.join("pictures", "lollipop.png"))
+
+        # Scale them to fit cell size
+        for key in self.assets:
+            self.assets[key] = pygame.transform.scale(self.assets[key], (self.cell_size, self.cell_size))
+
 
     def render(self):
-        grid = [[" ." for _ in range(self.grid_size[1])] for _ in range(self.grid_size[0])]
+        if self.render_mode != "human":
+            return super().render()
+
+        if self.window is None:
+            pygame.init()
+            self.window = pygame.display.set_mode(self.window_size)
+            pygame.display.set_caption("CollectEnv GUI")
+            self.clock = pygame.time.Clock()
+            self.font = pygame.font.SysFont("Arial", self.cell_size)
+
+        self.window.fill((255, 255, 255))  # tło
+
+        # Siatka (opcjonalnie)
+        for x in range(0, self.window_size[0], self.cell_size):
+            pygame.draw.line(self.window, (200, 200, 200), (x, 0), (x, self.window_size[1]))
+        for y in range(0, self.window_size[1], self.cell_size):
+            pygame.draw.line(self.window, (200, 200, 200), (0, y), (self.window_size[0], y))
+
+        # Draw objects
         for (x, y), item in self.objects.items():
-            grid[x][y] = " F" if item == "fruit" else " C"
+            sprite = self.assets["fruit"] if item == "fruit" else self.assets["candy"]
+            self.window.blit(sprite, (y * self.cell_size, x * self.cell_size))
+
+        # Draw agent
         ax, ay = self.agent_pos
-        grid[ax][ay] = " A"
-        output = "\n".join("".join(row) for row in grid)
-        print(output)
-        print(f"Step: {self.current_step}, Score: {self.score}")
+        self.window.blit(self.assets["agent"], (ay * self.cell_size, ax * self.cell_size))
+
+
+        pygame.display.flip()
+        self.clock.tick(10)
+
 
     def close(self):
-        pass
+        if self.window is not None:
+            pygame.quit()
+            self.window = None
+
+
+env = CollectEnv(render_mode="human")
+obs, _ = env.reset()
+
+done = False
+while not done:
+    action = env.action_space.sample()
+    obs, reward, done, truncated, info = env.step(action)
+    env.render()
+
+env.close()
