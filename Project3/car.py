@@ -109,8 +109,8 @@ while not done:
     test_env.render()
 
 episode_reward = float(episode_reward)  
-print(f"🎯 Reward z testu: {episode_reward:.2f}")
-print(f"🚗 Największa osiągnięta pozycja: {max_position:.4f}")
+print(f"Reward z testu: {episode_reward:.2f}")
+print(f"Największa osiągnięta pozycja: {max_position:.4f}")
 
 
 episodes = np.arange(len(callback.episode_rewards))
@@ -148,92 +148,3 @@ with open('episode_results.csv', 'w', newline='') as file:
         writer.writerow([i, callback.episode_rewards[i], callback.episode_max_positions[i], callback.episode_steps_to_goal[i]])
 
 test_env.close()
-
-# # Create training environment with observation normalization
-# env = make_vec_env(lambda: gym.make("MountainCarContinuous-v0"), n_envs=1)
-# env = VecNormalize(env, norm_obs=True, norm_reward=False)
-
-# # Create the action noise (with mean=0 and std=0.2)
-# action_noise = NormalActionNoise(mean=np.zeros(env.action_space.shape[0]), sigma=0.2 * np.ones(env.action_space.shape[0]))
-
-# # ⚙️ Better hyperparameters for DDPG
-# model = DDPG(
-#     "MlpPolicy", 
-#     env,
-#     verbose=1,
-#     learning_rate=0.0001,
-#     gamma=0.99,
-#     tau=0.005,  # Target network update rate
-#     batch_size=100,
-#     buffer_size=1_000_000,  # Replay buffer size
-#     learning_starts=10000,  # Number of steps before training starts
-#     action_noise=None,  # Use the NormalActionNoise
-#     tensorboard_log="./ddpg_log/DDPG_1"
-# )
-
-# # List to store rewards for plotting
-# episode_rewards = []
-
-# # ⏱ Training + measuring FPS
-# start_time = time.time()
-# for _ in range(0, 1_000, 1):  # Train in chunks to track rewards per chunk
-#     model.learn(total_timesteps=1000, reset_num_timesteps=False)
-    
-#     # Get the reward of the last episode (can be adjusted to track rewards more frequently)
-#     obs = env.reset()
-#     done = False
-#     episode_reward = 0
-#     while not done:
-#         action, _ = model.predict(obs, deterministic=True)
-#         obs, reward, terminated, truncated = env.step(action)
-#         done = terminated or truncated
-#         episode_reward += reward
-
-#     episode_rewards.append(episode_reward)
-
-# end_time = time.time()
-# print(f"⏱ Training took {(end_time - start_time):.2f} seconds")
-
-# # 💾 Save the model and normalization stats
-# model.save("ddpg_mountaincar")
-# env.save("vec_normalize.pkl")
-# print("📦 Model and normalization saved")
-
-# # 🧪 Testing with the same normalization
-# test_env = gym.make("MountainCarContinuous-v0", render_mode="human", goal_velocity=0.1)
-# test_env = VecNormalize.load("vec_normalize.pkl", test_env)
-# test_env.training = False  # Disable normalization updates during testing
-
-# obs, _ = test_env.reset()
-# done = False
-# episode_reward = 0
-
-# # Inside your training loop
-# while not done:
-#     action, _ = model.predict(obs, deterministic=True)
-#     obs, reward, terminated, truncated = env.step(action)
-    
-#     # If the car is above the desired position, add 100 points
-#     if obs[0][0] >= 0.5:  # Assuming 0.5 is the goal position on the x-axis
-#         reward = 100
-    
-#     done = terminated or truncated
-#     episode_reward += reward
-#     episode_rewards.append(episode_reward)
-
-
-# test_env.close()
-
-# # 📊 Save the result
-# with open("ddpg_rewards.txt", "w") as f:
-#     f.write(f"{episode_reward}\n")
-# print(f"📈 Test reward: {episode_reward:.2f}")
-
-# # 📈 Plot the rewards graph
-# plt.plot(episode_rewards)
-# plt.title("Training Rewards (DDPG)")
-# plt.xlabel("Episode")
-# plt.ylabel("Reward")
-# plt.grid(True)
-# plt.savefig("ddpg_training_rewards.png")  # Save the plot as an image
-# plt.show()
