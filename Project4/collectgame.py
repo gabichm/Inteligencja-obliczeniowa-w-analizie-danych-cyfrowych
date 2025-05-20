@@ -2,11 +2,15 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from typing import List, Tuple, Optional, Dict
+import pygame
+import os
+import sys
+import random
 
 
 class CollectEnv(gym.Env):
 
-    metadata = {"render_modes": ["ansi"]}
+    metadata = {"render_modes": ["human", "ansi"]}
 
     ACTIONS = ["up", "down", "left", "right", "none"]
     ACTION_MAP = {
@@ -20,7 +24,9 @@ class CollectEnv(gym.Env):
     def __init__(self, render_mode: Optional[str] = None):
         super().__init__()
         self.grid_size = (20, 20)
-        self.max_steps = 135
+        self.cell_size = 20
+        self.window_size = (self.grid_size[1] * self.cell_size, self.grid_size[0] * self.cell_size + 40)
+        self.max_steps = 125
         self.start_pos = (10, 10)
         self.render_mode = render_mode
 
@@ -29,6 +35,12 @@ class CollectEnv(gym.Env):
             "position": spaces.Box(low=0, high=19, shape=(2,), dtype=np.int32),
             "step": spaces.Discrete(self.max_steps + 1),
         })
+        self.assets = {}
+        if render_mode == "human":
+            pygame.init()
+            self.window = pygame.display.set_mode(self.window_size)
+            self.clock = pygame.time.Clock()
+            self.load_assets()
 
         self.spawn_schedule: List[Tuple[int, str, Tuple[int, int]]] = [
             (0, "fruit", (2, 17)), (4, "candy", (3, 14)), (7, "fruit", (6, 6)),
@@ -42,7 +54,8 @@ class CollectEnv(gym.Env):
             (94, "fruit", (8, 8)), (98, "fruit", (5, 13)), (99, "candy", (7, 14)),
             (105, "fruit", (10, 16)), (111, "candy", (8, 19)), (115, "fruit", (7, 19)),
         ]
-
+        self.window = None
+        self.clock = None
         self.reset()
 
     def reset(self, *, seed: Optional[int] = None, options: Optional[dict] = None):
@@ -50,42 +63,53 @@ class CollectEnv(gym.Env):
         self.agent_pos = list(self.start_pos)
         self.current_step = 0
         self.score = 0
-        self.objects: Dict[Tuple[int, int], str] = {}
-
+        self.objects: Dict[Tuple[int, int], Tuple[str, int]] = {}
+        self.game_over = False
+        self.game_over_time = None
         return self._get_obs(), {}
 
     def step(self, action: int):
         assert self.action_space.contains(action), f"Invalid action: {action}"
 
-        # Spawn new objects
+    # Spawn new objects
         for spawn_time, obj_type, pos in self.spawn_schedule:
             if spawn_time == self.current_step:
-                self.objects[pos] = obj_type
-
+                self.objects[pos] = (obj_type, self.current_step)  
+    
+        # Remove expired objects (after 30 steps)
+        expired_positions = [
+            pos for pos, (_, spawn_step) in self.objects.items()
+            if self.current_step - spawn_step >= 30
+        ]
+        for pos in expired_positions:
+            del self.objects[pos]
+    
         # Move agent
         delta = self.ACTION_MAP[action]
         new_row = min(max(self.agent_pos[0] + delta[0], 0), self.grid_size[0] - 1)
         new_col = min(max(self.agent_pos[1] + delta[1], 0), self.grid_size[1] - 1)
         self.agent_pos = [new_row, new_col]
-
+    
         # Check for item pickup
         reward = 0
         pos_tuple = tuple(self.agent_pos)
         if pos_tuple in self.objects:
-            if self.objects[pos_tuple] == "fruit":
+            obj_type, _ = self.objects[pos_tuple]
+            if obj_type == "fruit":
                 reward += 10
-            elif self.objects[pos_tuple] == "candy":
+            elif obj_type == "candy":
                 reward -= 10
             del self.objects[pos_tuple]
-
+    
         # Action penalty
         if action in [0, 1, 2, 3]:  # up/down/left/right
-            reward -= 0.2
-        # "none" action has no penalty
-
+            reward -= 0.05
+    
+        self.score += reward
         self.current_step += 1
         terminated = self.current_step >= self.max_steps
-
+        self.game_over = terminated
+    
         return self._get_obs(), reward, terminated, False, {}
 
     def _get_obs(self):
@@ -94,15 +118,56 @@ class CollectEnv(gym.Env):
             "step": self.current_step
         }
 
+    def load_assets(self):
+        self.assets["agent"] = pygame.image.load(os.path.join("pictures", "girl.png"))
+        self.assets["fruit"] = pygame.image.load(os.path.join("pictures", "apple.png"))
+        self.assets["candy"] = pygame.image.load(os.path.join("pictures", "lollipop.png"))
+
+        # Scale them to fit cell size
+        for key in self.assets:
+            self.assets[key] = pygame.transform.scale(self.assets[key], (self.cell_size, self.cell_size))
+
+
+
     def render(self):
-        grid = [[" ." for _ in range(self.grid_size[1])] for _ in range(self.grid_size[0])]
+        if self.render_mode != "human":
+            return super().render()
+
+        if self.window is None:
+            pygame.init()
+            self.window = pygame.display.set_mode(self.window_size)
+            pygame.display.set_caption("CollectEnv GUI")
+            self.clock = pygame.time.Clock()
+            self.font = pygame.font.SysFont("Arial", 20)
+    
+        self.window.fill((255, 255, 255))  # tło
+    
+        # punkty
+        score_text = self.font.render(f"Punkty: {self.score:.1f}", True, (0, 0, 0))
+        self.window.blit(score_text, (10, 10))
+    
+        offset_y = 40  
+    
+        # Siatka
+        for x in range(0, self.window_size[0], self.cell_size):
+            pygame.draw.line(self.window, (200, 200, 200), (x, offset_y), (x, self.window_size[1]))
+        for y in range(offset_y, self.window_size[1], self.cell_size):
+            pygame.draw.line(self.window, (200, 200, 200), (0, y), (self.window_size[0], y))
+    
+        # Obiekty 
         for (x, y), item in self.objects.items():
-            grid[x][y] = " F" if item == "fruit" else " C"
+            obj_type, _ = item
+            sprite = self.assets["fruit"] if obj_type == "fruit" else self.assets["candy"]
+            self.window.blit(sprite, (y * self.cell_size, x * self.cell_size + offset_y))
+    
+        # Agent 
         ax, ay = self.agent_pos
-        grid[ax][ay] = " A"
-        output = "\n".join("".join(row) for row in grid)
-        print(output)
-        print(f"Step: {self.current_step}, Score: {self.score}")
+        self.window.blit(self.assets["agent"], (ay * self.cell_size, ax * self.cell_size + offset_y))
+    
+        pygame.display.flip()
+        self.clock.tick(10)
 
     def close(self):
-        pass
+        if self.window is not None:
+            pygame.quit()
+            self.window = None
