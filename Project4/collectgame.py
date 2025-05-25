@@ -113,9 +113,27 @@ class CollectEnv(gym.Env):
         return self._get_obs(), reward, terminated, False, {}
 
     def _get_obs(self):
+        pos = np.array(self.agent_pos, dtype=np.int32)
+
+        # Znajdź najbliższy cel
+        min_dist = float("inf")
+        target_delta = (0, 0)
+        target_type = 0  # 0 = brak, 1 = fruit, -1 = candy
+    
+        for (obj_x, obj_y), (obj_type, _) in self.objects.items():
+            dx = obj_x - self.agent_pos[0]
+            dy = obj_y - self.agent_pos[1]
+            dist = abs(dx) + abs(dy)
+            if dist < min_dist:
+                min_dist = dist
+                target_delta = (dx, dy)
+                target_type = 1 if obj_type == "fruit" else -1
+    
         return {
-            "position": np.array(self.agent_pos, dtype=np.int32),
-            "step": self.current_step
+            "position": pos,
+            "step": self.current_step,
+            "target_delta": np.array(target_delta, dtype=np.int32),
+            "target_type": target_type,
         }
 
     def load_assets(self):
