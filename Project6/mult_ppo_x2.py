@@ -1,127 +1,153 @@
-from pettingzoo.mpe import simple_spread_v3
-from stable_baselines3 import PPO
-import numpy as np
-import matplotlib.pyplot as plt
-from torch.nn import ReLU
 import gymnasium as gym
+import numpy as np
+from stable_baselines3 import PPO
+import matplotlib.pyplot as plt
 
-def make_single_agent_env(env, agent_id):
-    """
-    Wrapper tworzący środowisko single-agent dla wybranego agenta
-    """
-    class SingleAgentWrapper(gym.Env):
-        def __init__(self, env, agent_id):
-            super().__init__()
-            self.env = env
-            self.agent_id = agent_id
+# 1. Definicja środowiska Connect Four
+class ConnectFourEnv(gym.Env):
+    def __init__(self, width=7, height=6):
+        super(ConnectFourEnv, self).__init__()
+        self.width = width
+        self.height = height
+        self.board = np.zeros((height, width), dtype=int)
+        self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(height, width), dtype=np.int32)
+        self.action_space = gym.spaces.Discrete(width)
+        self.current_player = 1  # 1 or -1
 
-            # Pobieramy przestrzenie akcji i obserwacji dla wybranego agenta
-            self.action_space = env.action_space(agent_id)
-            self.observation_space = env.observation_space(agent_id)
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
+        self.board = np.zeros((self.height, self.width), dtype=int)
+        self.current_player = 1
+        info = {}
+        return self.board, info
 
-            # Inicjalizacja środowiska
-            self.env.reset()
+    def step(self, action):
+        # Sprawdzenie czy ruch jest poprawny
+        if self.board[0, action] != 0:
+            return self.board, -1, True, False, {}  # Niepoprawny ruch, kara
 
-        def reset(self, **kwargs):
-            self.env.reset()
-            obs, reward, terminated, truncated, info = self.env.last()
-            return obs, {}
+        # Wykonanie ruchu
+        for i in range(self.height - 1, -1, -1):
+            if self.board[i, action] == 0:
+                self.board[i, action] = self.current_player
+                break
 
-        def step(self, action):
-            self.env.step(action)
-            obs, reward, terminated, truncated, info = self.env.last()
-            done = terminated or truncated
-            return obs, reward, done, False, info
+        # Sprawdzenie czy ktoś wygrał
+        winner = self.check_winner()
+        done = winner != 0 or np.all(self.board != 0)
+        reward = 1 if winner == self.current_player else 0
 
-        def render(self, mode="human"):
-            return self.env.render(mode=mode)
+        # Zmiana gracza
+        self.current_player *= -1
 
-        def close(self):
-            self.env.close()
+        return self.board, reward, done, False, {}
 
-    return SingleAgentWrapper(env, agent_id)
+    def check_winner(self):
+        # Implementacja sprawdzania wygranej (poziomo, pionowo, po skosie)
+        # Uproszczona wersja - tylko poziomo
+        for i in range(self.height):
+            for j in range(self.width - 3):
+                if (self.board[i, j] == self.board[i, j+1] == self.board[i, j+2] == self.board[i, j+3] != 0):
+                    return self.board[i, j]
 
-# Główne środowisko
-env = simple_spread_v3.env(N=2, local_ratio=0.5, max_cycles=50, continuous_actions=False)
+        # Sprawdzenie pionowo
+        for i in range(self.height - 3):
+            for j in range(self.width):
+                if (self.board[i, j] == self.board[i+1, j] == self.board[i+2, j] == self.board[i+3, j] != 0):
+                    return self.board[i, j]
 
-# Tworzymy wrappery dla każdego agenta
-env_agent1 = make_single_agent_env(env, "agent_0")
-env_agent2 = make_single_agent_env(env, "agent_1")
+        # Sprawdzenie po skosie (od lewej do prawej)
+        for i in range(self.height - 3):
+            for j in range(self.width - 3):
+                if (self.board[i, j] == self.board[i+1, j+1] == self.board[i+2, j+2] == self.board[i+3, j+3] != 0):
+                    return self.board[i, j]
 
-# Konfiguracja PPO
-def make_model(env):
-    return PPO(
-        "MlpPolicy",
-        env,
-        verbose=1,
-        learning_rate=3e-4,
-        n_steps=2048,
-        batch_size=64,
-        n_epochs=10,
-        gamma=0.99,
-        clip_range=0.2,
-        policy_kwargs=dict(net_arch=dict(pi=[64, 64], vf=[64, 64]), activation_fn=ReLU),
-        device="cpu"
-    )
+        # Sprawdzenie po skosie (od prawej do lewej)
+        for i in range(self.height - 3):
+            for j in range(3, self.width):
+                if (self.board[i, j] == self.board[i+1, j-1] == self.board[i+2, j-2] == self.board[i+3, j-3] != 0):
+                    return self.board[i, j]
 
-model_agent1 = make_model(env_agent1)
-model_agent2 = make_model(env_agent2)
+        return 0
 
-# Trening i testowanie
-num_episodes = 100
-episode_length = 50  # Dopasowane do max_cycles
+# 2. Definicja hiperparametrów dla agentów
+learning_rates = [0.0001, 0.0003, 0.001]
+gammas = [0.95, 0.99]
+clip_ranges = [0.1, 0.2]
 
-rewards_history = {"agent_0": [], "agent_1": []}
+# Wybierz hiperparametry dla agenta 1
+lr1 = learning_rates[0]
+gamma1 = gammas[0]
+clip_range1 = clip_ranges[0]
 
-for ep in range(num_episodes):
-    # Trening każdego agenta
-    model_agent1.learn(total_timesteps=episode_length, reset_num_timesteps=False)
-    model_agent2.learn(total_timesteps=episode_length, reset_num_timesteps=False)
+# Wybierz hiperparametry dla agenta 2
+lr2 = learning_rates[1]
+gamma2 = gammas[1]
+clip_range2 = clip_ranges[1]
 
-    # Testowanie
-    env.reset()
-    episode_rewards = {agent: 0 for agent in env.agents}
+# 3. Tworzenie agentów
+env = ConnectFourEnv()
+agent1 = {
+    "model": PPO("MlpPolicy", env, learning_rate=lr1, gamma=gamma1, clip_range=clip_range1, verbose=0),
+    "results": [],
+    "label": f"Agent 1: LR={lr1}, Gamma={gamma1}, Clip={clip_range1}"
+}
+agent2 = {
+    "model": PPO("MlpPolicy", env, learning_rate=lr2, gamma=gamma2, clip_range=clip_range2, verbose=0),
+    "results": [],
+    "label": f"Agent 2: LR={lr2}, Gamma={gamma2}, Clip={clip_range2}"
+}
 
-    for agent in env.agent_iter():
-        obs, reward, terminated, truncated, info = env.last()
-        done_agent = terminated or truncated
-        episode_rewards[agent] += reward
+agents = [agent1, agent2]
 
-        if done_agent:
-            action = None
+# 4. Uczenie agentów
+num_episodes = 1000
+
+for episode in range(num_episodes):
+    obs, _ = env.reset()
+    done = False
+    total_reward_agent1 = 0
+    total_reward_agent2 = 0
+    current_player = 0  # 0 dla agenta1, 1 dla agenta2
+
+    while not done:
+        action, _states = agents[current_player]["model"].predict(obs, deterministic=True)
+        obs, reward, done, _, info = env.step(action)
+
+        if current_player == 0:
+            total_reward_agent1 += reward
+            total_reward_agent2 -= reward
         else:
-            if agent == "agent_0":
-                action, _ = model_agent1.predict(obs, deterministic=True)
-            else:
-                action, _ = model_agent2.predict(obs, deterministic=True)
+            total_reward_agent2 += reward
+            total_reward_agent1 -= reward
 
-        env.step(action)
+        current_player = 1 - current_player  # Zmiana gracza
 
-    # Zapis wyników z bieżącego epizodu
-    for agent in env.agents:
-        rewards_history[agent].append(episode_rewards[agent])
+    agent1["results"].append(total_reward_agent1)
+    agent2["results"].append(total_reward_agent2)
+    agent1["model"].learn(total_timesteps=1)
+    agent2["model"].learn(total_timesteps=1)
 
-    # Wypisanie statystyk
-    for agent in env.agents:
-        mean_reward = np.mean(rewards_history[agent])
-        max_reward = np.max(rewards_history[agent])
-        print(f"Epizod {ep+1} - {agent}: mean_reward={mean_reward:.2f}, max_reward={max_reward:.2f}")
+    # Wyświetlanie wyników po każdym epizodzie (opcjonalne)
+    print(f"Epizod: {episode + 1}")
+    print(f"  {agent1['label']}, Reward={agent1['results'][-1]}")
+    print(f"  {agent2['label']}, Reward={agent2['results'][-1]}")
 
-    print(f"Epizod {ep+1}: Agent 0 - {episode_rewards['agent_0']:.2f}, Agent 1 - {episode_rewards['agent_1']:.2f}")
-
-# Zapis modeli
-model_agent1.save("ppo_agent1_simple_spread_fixed")
-model_agent2.save("ppo_agent2_simple_spread_fixed")
-
-# Wykresy
+# 5. Analiza i Wykres
 plt.figure(figsize=(12, 6))
-plt.plot(rewards_history["agent_0"], label="Agent 0")
-plt.plot(rewards_history["agent_1"], label="Agent 1")
+episodes = range(1, num_episodes + 1)
+
+plt.plot(episodes, agent1["results"], label=agent1["label"])
+plt.plot(episodes, agent2["results"], label=agent2["label"])
+
+# Dodanie etykiet i tytułu
 plt.xlabel("Epizod")
-plt.ylabel("Łączna nagroda")
-plt.title("PPO: Nagrody w środowisku simple_spread")
+plt.ylabel("Nagroda")
+plt.title("Porównanie Agentów PPO w Connect Four")
 plt.legend()
-plt.grid()
-plt.tight_layout()
-plt.savefig("ppo_rewards_fixed.png")
+plt.grid(True)
+
+# Wyświetlenie wykresu
+plt.savefig("wyk.png")
+
 
